@@ -1,0 +1,185 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<title>ЦентрАвтоМагистраль</title>
+<link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="Styles/sencha-touch.css" type="text/css" />
+<link rel="stylesheet" href="Styles/Site.css" type="text/css" />
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true&language=ru"></script>
+<script type="text/javascript" src="Scripts/sencha-touch.js" ></script>
+<script type="text/javascript" src="Scripts/index.js" ></script>
+</head>
+<body>
+    <div style="width:1in" id="dpi"></div>
+    <div style="display:none">
+        <div id="meteo">
+            <table class="stTable">
+                <tr>
+                    <td colspan="2">
+                        <center>
+                            <table style="width:auto">
+                                <tr>
+                                    <td>
+                                        <img id="meteo_img" />
+                                    </td>
+                                    <td style="vertical-align:middle">
+                                        <span id="meteo_tmp" style="margin: 0 0 0 10px;" class="arial16 bold"></span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </center>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:40%;vertical-align:middle" class="arial10 bold topLine">
+                        ПОКРЫТИЕ:
+                    </td>
+                    <td class="topLine">
+                        <span id="meteo_road_state" class="arial14"></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="arial10 bold">Ветер:</span><br />
+                        <img id="meteo_wind_img" /><br/>
+                    </td>
+                    <td style="vertical-align:middle; text-align:center">
+                            <span class="arial10 bold" >Направление</span><br />
+                            <span id="meteo_wind_direct" class="arial16 bold" ></span><br />
+                            <span class="arial10 bold">Скорость, м/с</span><br />
+                            <span id="meteo_wind_speed" class="arial16 bold" ></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="common">
+            <table class="stTable">
+                <tr>
+                    <td style="width:50%;text-align:center">
+                        <span id="common_road" class="arial10 bold"></span>
+                    </td>
+                    <td class="arial16 bold" id="common_km" style="text-align:center;vertical-align:middle">
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="topLine">
+                        <table>
+                            <tr>
+                                <td class="arial10" style="width:20%">
+                                    Длина:
+                                </td>
+                                <td class="arial12 bold" id="common_roadLenght">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="arial10">
+                                    Служба:
+                                </td>
+                                <td class="arial10 bold" id="common_service">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td />
+                                <td class="arial10" id="common_servicePhone">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="arial10">
+                                    Ремонт:
+                                </td>
+                                <td class="arial10 bold" id="common_repair">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="arial10">
+                                    Аварийность:
+                                </td>
+                                <td class="arial10 bold" id="common_dtp">
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="speed">
+            <div>
+                <table class="stTable">
+                    <tr>
+                        <td style="vertical-align:middle" class="arial12 bold">
+                            СЕЙЧАС:
+                        </td>
+                        <td id="speed_now_l" class="arial12 bold" style="color:Red;text-align:center">
+                        </td>
+                        <td id="speed_km_l" class="arial12 bold" style="color:Red;text-align:center">
+                        </td>
+                        <td id="speed_now_r" class="arial12 bold" style="color:Red;text-align:center">
+                        </td>
+                        <td id="speed_km_r" class="arial12 bold" style="color:Red;text-align:center">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td />
+                        <td class="arial10" id="speed_name_l">
+                        </td>
+                        <td />
+                        <td class="arial10" id="speed_name_r">
+                        </td>
+                        <td />
+                    </tr>
+                </table>
+            </div>
+            <div class="topLine">
+                <table style="margin-top:3px">
+                    <tr>
+                        <td style="width:1px; padding:0 2px" class="arial10 bold">ОБЫЧНО:</td>
+                        <td style="text-align:center"><img src="Images/Sensors/left.png" onclick="prevSpeedDay()" /></td>
+                        <td style="width:100pt;text-align:center" id="speed_day" class="arial10">ПОНЕДЕЛЬНИК</td>
+                        <td style="text-align:center"><img src="Images/Sensors/right.png" onclick="nextSpeedDay()" /></td>
+                    </tr>
+                </table>
+                <div class="arial12" style="padding:3px" id="speed_name2_l">
+                </div>
+                <center>
+                    <div style="padding:5px">
+                        <img id="speed_usualy_l" />
+                    </div>
+                </center>
+                <div class="arial12" style="padding:3px" id="speed_name2_r">
+                </div>
+                <center>
+                    <div style="padding:5px">
+                        <img id="speed_usualy_r" />
+                    </div>
+                </center>
+                <table>
+                    <tr>
+                        <td class="arial10" style="width:50%; text-align:center">медленно</td>
+                        <td style="width:156px"><img src="Images/Sensors/legend.png" style="width:100px" /></td>
+                        <td class="arial10" style="width:50%; text-align:center">быстро</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div id="video">
+            <table>
+                <tr>
+                    <td id="video_road" class="arial12" style="text-align:center; padding: 10px 5px"></td>
+                </tr>
+                <tr>
+                    <td style="text-align:center; vertical-align:middle">
+                        <img id="video_img" style="width:200px;height:200px" alt="" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="search">
+            <input type="text" style="width:145pt; margin: 5px" id="search_text" />
+            <img src="Images/search.png" onclick="onSearch()" />
+        </div>
+    </div>
+    <div id="request_progress" class="requestProgeress">ожидание ответа сервера...</div>
+</body>
+</html>

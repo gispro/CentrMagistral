@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://earth.google.com/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document>
+    <name>meteo_stations7</name>
+    <visibility>1</visibility>
+    <Folder id="kml_ft_meteost_Project">
+      <name>meteost_Project</name>
+      <Placemark id="kml_1">
+        <name>1203</name>
+        <Point>
+          <coordinates>37.1744162537083,55.5637654053518,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_2">
+        <name>2130</name>
+        <Point>
+          <coordinates>39.2488517847586,57.0022400208454,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_3">
+        <name>2207</name>
+        <Point>
+          <coordinates>38.8727073503778,55.5026868502527,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_4">
+        <name>2061</name>
+        <Point>
+          <coordinates>37.5665199229665,55.3315269194016,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_5">
+        <name>1010</name>
+        <Point>
+          <coordinates>37.843357756848,55.2955728911125,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_6">
+        <name>2093</name>
+        <Point>
+          <coordinates>37.836146685415,55.5057031270507,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_7">
+        <name>2201</name>
+        <Point>
+          <coordinates>38.3878486808369,55.2120854392841,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_8">
+        <name>1001</name>
+        <Point>
+          <coordinates>37.4961952759149,56.1612335939541,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_9">
+        <name>1102</name>
+        <Point>
+          <coordinates>38.3376007883956,55.3885125104237,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_10">
+        <name>1112</name>
+        <Point>
+          <coordinates>39.2110345609284,54.8603954736533,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_11">
+        <name>2041</name>
+        <Point>
+          <coordinates>37.3349540595557,55.7523908818323,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_12">
+        <name>2129</name>
+        <Point>
+          <coordinates>38.7845781105646,56.7017349042086,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_13">
+        <name>1005</name>
+        <Point>
+          <coordinates>37.8726613395068,55.9893368027905,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_14">
+        <name>4932</name>
+      </Placemark>
+      <Placemark id="kml_15">
+        <name>1009</name>
+        <Point>
+          <coordinates>36.4649201292006,55.9787800091009,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_16">
+        <name>2092</name>
+        <Point>
+          <coordinates>38.038620620926,54.83586336317,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_17">
+        <name>1006</name>
+        <Point>
+          <coordinates>38.2583710772538,56.3337296227895,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_18">
+        <name>2206</name>
+        <Point>
+          <coordinates>38.6790052588003,56.09030315277,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_19">
+        <name>2141</name>
+        <Point>
+          <coordinates>36.631282254719,55.0833445023823,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_20">
+        <name>2205</name>
+        <Point>
+          <coordinates>37.1584757567894,56.4397771531266,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_21">
+        <name>2052</name>
+        <Point>
+          <coordinates>38.3892627620447,55.5769114501534,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_22">
+        <name>4997</name>
+        <Point>
+          <coordinates>38.0201949311804,55.5786416044448,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_23">
+        <name>1101</name>
+        <Point>
+          <coordinates>38.7327445631878,55.1443508995288,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_24">
+        <name>1007</name>
+        <Point>
+          <coordinates>37.3197193186499,55.8023627292162,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_25">
+        <name>2032</name>
+        <Point>
+          <coordinates>37.2849499339499,56.6432429747974,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_26">
+        <name>2124</name>
+        <Point>
+          <coordinates>38.0382574670909,56.1884646426368,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_27">
+        <name>4052</name>
+        <Point>
+          <coordinates>36.8698856359483,55.5885242564493,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_28">
+        <name>2204</name>
+        <Point>
+          <coordinates>36.9613332569126,55.0799249626455,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_29">
+        <name>2051</name>
+        <Point>
+          <coordinates>38.1961077004578,56.0393263930688,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_30">
+        <name>1008</name>
+        <Point>
+          <coordinates>36.9476988844484,55.8191219228527,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_31">
+        <name>2091</name>
+        <Point>
+          <coordinates>37.6859056343572,55.5493997701384,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_32">
+        <name>4938</name>
+        <Point>
+          <coordinates>36.3980283643628,55.3842081608616,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_33">
+        <name>1012</name>
+        <Point>
+          <coordinates>37.2428884201338,55.402164773763,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_34">
+        <name>2031</name>
+        <Point>
+          <coordinates>37.5406840205607,56.0435047181345,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_35">
+        <name>2123</name>
+        <Point>
+          <coordinates>37.790559632655,55.914707163715,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_36">
+        <name>4021</name>
+        <Point>
+          <coordinates>37.3224756490805,55.6797042970067,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_37">
+        <name>2072</name>
+        <Point>
+          <coordinates>35.5065671162667,56.0369925793499,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_38">
+        <name>2081</name>
+        <Point>
+          <coordinates>38.5346591493679,54.4715665623616,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_39">
+        <name>2122</name>
+        <Point>
+          <coordinates>37.7917584883006,55.9161190867799,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_40">
+        <name>2203</name>
+        <Point>
+          <coordinates>37.9022451372455,56.4410027508919,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_41">
+        <name>2042</name>
+        <Point>
+          <coordinates>37.2205087282915,55.7331776445473,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_42">
+        <name>1111</name>
+        <Point>
+          <coordinates>38.9046794720129,55.0929107312727,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_43">
+        <name>1002</name>
+        <Point>
+          <coordinates>37.610242353471,55.5364967352524,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_44">
+        <name>2021</name>
+        <Point>
+          <coordinates>38.1315450686241,55.9225512401242,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_45">
+        <name>1000</name>
+        <Point>
+          <coordinates>37.5589151846231,55.0437740313919,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_46">
+        <name>1011</name>
+        <Point>
+          <coordinates>37.4596885440655,55.5758306180975,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_47">
+        <name>2121</name>
+        <Point>
+          <coordinates>37.7760481738935,55.9101813257691,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_48">
+        <name>3071</name>
+        <Point>
+          <coordinates>35.9611106857658,56.0222583328088,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_49">
+        <name>2202</name>
+        <Point>
+          <coordinates>36.5229692628604,55.2614885185809,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_50">
+        <name>2071</name>
+        <Point>
+          <coordinates>35.9610352407567,56.0221985556045,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_51">
+        <name>1103</name>
+        <Point>
+          <coordinates>38.4590934273182,55.3050536127251,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_52">
+        <name>1004</name>
+        <Point>
+          <coordinates>36.7685664319201,55.3734255627743,0 </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark id="kml_53">
+        <name>4932</name>
+        <Point>
+          <coordinates>36.2667116650514,55.7738894649639,0 </coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>
