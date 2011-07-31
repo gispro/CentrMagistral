@@ -37,12 +37,23 @@ public class Data : IHttpHandler {
                 case "repair":
                     BuildRepairData(builder, id);
                     break;
+                case "frepair":
+                    BuildFutureRepairData(builder, id);
+                    break;
             }
         }
         if (HttpContext.Current.Request.QueryString["callback"] != null)
             builder.Append(")");
         context.Response.Write(builder.ToString());
         context.Response.End();
+    }
+
+    private void BuildFutureRepairData(System.Text.StringBuilder builder, string id)
+    {
+        var data = DataBase.DataAccessLayer.GetFutureRepairs(int.Parse(id));
+        var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
+
+        builder.Append(serializer.Serialize(data));
     }
 
     private void BuildRepairData(System.Text.StringBuilder builder, string id)
@@ -119,10 +130,14 @@ public class Data : IHttpHandler {
         int camId = 0;
         int.TryParse(id, out camId);
         DateTime? from = null;
+        var offsetStr = HttpContext.Current.Request.QueryString["offset"];
+        var offset = 0;
+        if (offsetStr != null)
+            offset = int.Parse(offsetStr);
         if (fromTime != null)
         {
             var fromTimeAsLong = long.Parse(fromTime);
-            from = new DateTime(1970, 1, 1).AddMilliseconds(fromTimeAsLong);
+            from = new DateTime(1970, 1, 1).AddMilliseconds(fromTimeAsLong).AddMinutes(-offset);            
         }
         var table = DataBase.DataAccessLayer.GetData(source, from, camId);
         foreach (System.Data.DataRow row in table.Rows)
@@ -146,9 +161,8 @@ public class Data : IHttpHandler {
                 else if (field.DataType == typeof(DateTime))
                 {
                     var date = DataBase.DataConverter.ToDateTime(row[field], DateTime.MinValue);
-                    var milliseconds = Convert.ToInt64((date - (new DateTime(1970, 1, 1))).TotalMilliseconds);
                     if (date != DateTime.MinValue)
-                        builder.AppendFormat("\"\\/Date({0})\\/\"", milliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                        builder.AppendFormat("new Date({0}, {1}, {2}, {3}, {4}, {5})", date.Year, (date.Month - 1), date.Day, date.Hour, date.Minute, date.Second);
                     else
                         builder.AppendFormat("null");
                 }

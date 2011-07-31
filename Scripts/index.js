@@ -4,19 +4,6 @@ var dpi = 96;
 var geoLocationProovider = null;
 var moscow = new google.maps.LatLng(55.748758, 37.6174);
 var url = 'http://89.221.201.176:8080/fedroads';
-var camImage = new google.maps.MarkerImage(
-                    'Images/video.png',
-                    new google.maps.Size(32, 31),
-                    new google.maps.Point(0, 0),
-                    new google.maps.Point(16, 31)
-                  );
-
-var camShadow = new google.maps.MarkerImage(
-                    'Images/shadow.png',
-                    new google.maps.Size(64, 52),
-                    new google.maps.Point(0, 0),
-                    new google.maps.Point(-5, 42)
-                  );
 var settingsPanel = null;
 var settingsButton = null;
 var layers = [];
@@ -26,6 +13,7 @@ var startMouseDown = new Date();
 var identityMarker = null;
 var locationMarker = null;
 var searchMarker = null;
+var videoData = null;
 
 Ext.setup({
     tabletStartupScreen: 'Images/tablet_startup.png',
@@ -34,9 +22,6 @@ Ext.setup({
     glossOnIcon: false,
     onReady: function () {
         
-        Ext.getDom('request_progress').style.top = (document.documentElement.clientHeight - 20) + 'px';
-        Ext.getDom('request_progress').style.left = (document.documentElement.clientWidth - 200) + 'px';
-
         dpi = document.getElementById('dpi').offsetWidth;
         if (Ext.supports.GeoLocation) {
             geoLocationProovider = (navigator.geolocation ? navigator.geolocation :
@@ -54,20 +39,6 @@ Ext.setup({
                 style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
             }
         }
-
-        image = new google.maps.MarkerImage(
-            'point.png',
-            new google.maps.Size(32, 31),
-            new google.maps.Point(0, 0),
-            new google.maps.Point(16, 31)
-            ),
-
-        shadow = new google.maps.MarkerImage(
-            'shadow.png',
-            new google.maps.Size(64, 52),
-            new google.maps.Point(0, 0),
-            new google.maps.Point(-5, 42)
-            ),
 
         settingsButton = new Ext.Button({
             iconCls: 'settings',
@@ -90,11 +61,12 @@ Ext.setup({
                                 if (locationMarker != null)
                                     locationMarker.setMap(null);
                                 locationMarker = new google.maps.Marker({
+                                    icon: 'Images/location.png',
                                     position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
                                     map: map.map,
                                 });
                                 map.map.panTo(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
-                                map.map.setZoom(10);
+                                map.map.setZoom(17);
                             });
                     }
                 },
@@ -127,7 +99,7 @@ Ext.setup({
         layers['sensors'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=sensors&icon=sensors&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
 
         layers['dtp'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=dtp&t=13', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['remont'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+        layers['remont'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont&t=111', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
 
         google.maps.event.addListener(map.map, 'mousedown', function (event) {
             startMouseDown = new Date();
@@ -135,7 +107,9 @@ Ext.setup({
         google.maps.event.addListener(map.map, 'mouseup', function (event) {
             if (inRequest || (new Date()).getTime() - startMouseDown.getTime() > 500)
                 return;
+            videoData = null;
             identityMarker = new google.maps.Marker({
+                icon: 'Images/tapping.png',
                 position: event.latLng,
                 map: map.map,
             });
@@ -158,6 +132,8 @@ Ext.setup({
                 callback: onIdentity
             });
         });
+
+        map.map.mapTypes.set("ArcGIS", new gmaps.ags.MapType("http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/mosobl_osn/MapServer", {name: 'ArcGIS'}) );
     }
 });
 
@@ -226,6 +202,8 @@ function onIdentity(result) {
     if (objects.meteo != null || objects.video != null
         || objects.speed != null || objects.common != null) {
         showInfoWindow(objects, roadName);
+    } else {
+        getNoInfo().show();
     }
 }
 
@@ -290,6 +268,7 @@ function showInfoWindow(objects, roadName) {
 }
 
 function onMeteoClick() {
+    lastVideoPanel = null;
     Ext.util.JSONP.request({
         url: 'Data.ashx',
         callbackKey: 'callback',
@@ -324,15 +303,87 @@ function onGetMeteoData(result) {
     dialogPanel.doLayout();
 }
 
+var currVideoIndex = 0;
 function onVideoClick() {
+    lastVideoPanel = null;
+    var ddd = (new Date());
+    if (videoData == null) {    
+        Ext.util.JSONP.request({
+            url: 'Data.ashx',
+            callbackKey: 'callback',
+            params: { source: 'image', id: this.id, from: (new Date()).getTime(), offset: (new Date()).getTimezoneOffset() },
+            callback: Ext.util.Functions.createDelegate(onGetVideoData, { id: this.id })
+        });
+    } 
+    {
+        dialogPanel.removeAll();
+        Ext.getDom('video_road').innerHTML = this.road;
+        dialogPanel.add(new Ext.Panel({ html: Ext.getDom('video').innerHTML }));
+        dialogPanel.doLayout();
+    }
+}
+
+function onGetVideoData(result) {
+    if (videoData == null) {
+        videoData = [];
+        currVideoIndex = 0;
+    }
+    for(var i = 0; i < result.length; i++)
+        videoData.push(result[i]);
+    if (currVideoIndex >= videoData.length)
+        currVideoIndex = videoData.length - 1;
+    showVideoImage();
+}
+
+function onSwipe(targetId, direction) {
+    switch(direction) {
+        case 'left':
+            currVideoIndex++;
+            showVideoImage(direction);
+            break;
+        case 'right':
+            currVideoIndex--;
+            showVideoImage(direction);
+            break;
+    }
+}
+
+var lastVideoPanel = null;
+function showVideoImage(dir) {
+    if (currVideoIndex < 0)
+        currVideoIndex = 0;
+    if (currVideoIndex >= videoData.length && videoData.length > 0) {
+        Ext.util.JSONP.request({
+            url: 'Data.ashx',
+            callbackKey: 'callback',
+            params: { source: 'image', id: videoData[videoData.length - 1].kcamera, from: videoData[videoData.length - 1].load_time.getTime() },
+            callback: Ext.util.Functions.createDelegate(onGetVideoData, { id: videoData[videoData.length - 1].kcamera, dir: dir })
+        });
+    } else {
+        if (lastVideoPanel != null) {
+            Ext.Anim.run(lastVideoPanel, 'fade',
+            {
+                scope: lastVideoPanel,
+                after: function () {
+                    this.hide();
+                    setVideoImage();
+                }
+            });
+        } else 
+            setVideoImage();        
+    }
+}
+
+function setVideoImage() {
     dialogPanel.removeAll();
-    Ext.getDom('video_road').innerHTML = this.road;
-    Ext.getDom('video_img').src = "Image.ashx?camera=" + this.id;
-    dialogPanel.add(new Ext.Panel({ html: Ext.getDom('video').innerHTML }));
+    Ext.getDom('video_img').src = videoData[currVideoIndex].image;
+    lastVideoPanel = new Ext.Panel({ html: Ext.getDom('video').innerHTML, listeners : { swipe : function(c) { alert(c.direction); } } });
+    dialogPanel.add(lastVideoPanel);
     dialogPanel.doLayout();
 }
 
 function onSpeedClick() {
+    lastVideoPanel = null;
     dialogPanel.removeAll();
     dialogPanel.doLayout();
     Ext.util.JSONP.request({
@@ -365,6 +416,7 @@ function onGetSpeedData(result) {
     Ext.getDom('speed_km_r').innerHTML = '';
     if (result != null && result.speedName_L != null && result.speedName_L != '') {
         Ext.getDom('speed_now_l').innerHTML = result.speed_L;
+        Ext.getDom('speed_now_l').style.color = getSpeedColor(result.speed_L);
         Ext.getDom('speed_name_l').innerHTML = result.speedName_L;
         Ext.getDom('speed_name2_l').innerHTML = result.speedName_L;
         Ext.getDom('speed_km_l').innerHTML = ' км/ч';
@@ -372,12 +424,26 @@ function onGetSpeedData(result) {
     } 
     if (result != null && result.speedName_R != null && result.speedName_R != '') {
         Ext.getDom('speed_now_r').innerHTML = result.speed_R;
+        Ext.getDom('speed_now_r').style.color = getSpeedColor(result.speed_R);
         Ext.getDom('speed_name_r').innerHTML = result.speedName_R;
         Ext.getDom('speed_name2_r').innerHTML = result.speedName_R;
         Ext.getDom('speed_km_r').innerHTML = (haveL ? '' : ' км/ч');
         haveR = true;
     } 
     updateDay();
+}
+
+function getSpeedColor(speed) {
+    if (speed <= 50)
+        return '#FF0000';
+    else if (speed <= 60)
+        return '#FFAA00';
+    else if (speed <= 70)
+        return '#FFFF00';
+    else if (speed <= 90)
+        return '#AAFF00';
+    else 
+        return '#4CE600';
 }
 
 function updateDay() {
@@ -428,8 +494,8 @@ function prevSpeedDay() {
 }
 
 function onCommonClick() {
+    lastVideoPanel = null;
     Ext.getDom('common_road').innerHTML = this.road;
-    Ext.getDom('common_km').style.color = 'red';
     Ext.getDom('common_km').innerHTML = this.km == null ? ('') : (this.km + '-й км');
     Ext.getDom('common_roadLenght').innerHTML = this.roadLength + ' км';
     Ext.getDom('common_service').innerHTML = this.service;
@@ -444,6 +510,12 @@ function onCommonClick() {
         params: { source: 'repair', id: this.roadId },
         callback: Ext.util.Functions.createDelegate(onGetRepairData, { })
     });
+    Ext.util.JSONP.request({
+        url: 'Data.ashx',
+        callbackKey: 'callback',
+        params: { source: 'frepair', id: this.roadId },
+        callback: Ext.util.Functions.createDelegate(onGetFutureRepairData, { })
+    });
 }
 
 function onGetRepairData(result) {
@@ -456,6 +528,22 @@ function onGetRepairData(result) {
     if (str == "")
         str = "нет ремонта";
     Ext.getDom('common_repair').innerHTML = str;
+    dialogPanel.removeAll();
+    dialogPanel.add(new Ext.Panel({ html: Ext.getDom('common').innerHTML }));
+    dialogPanel.doLayout();
+}
+
+function onGetFutureRepairData(result) {
+    var str = "";
+    for (var i = 0; i < result.length; i++) {
+        if (i > 0)
+            str += ', ';
+        str += (result[i].Start + ' - ' + result[i].End + ' км ');
+        str += ('<span class="reg">(с ' + result[i].StartDateStr + ')</span>');
+    }
+    if (str == "")
+        str = "нет ремонта";
+    Ext.getDom('common_future_repair').innerHTML = str;
     dialogPanel.removeAll();
     dialogPanel.add(new Ext.Panel({ html: Ext.getDom('common').innerHTML }));
     dialogPanel.doLayout();
@@ -529,6 +617,9 @@ function getTopSettings() {
                     case 1:
                         getObjectsSettings().showBy(settingsButton);
                         break;
+                    case 2:
+                        getAbout().show();
+                        break;
                 }
             }
         }
@@ -563,7 +654,78 @@ function getTopSettings() {
     return settingsPanel;
 }
 
+var aboutPanel = null;
+function getAbout() {
+    if (aboutPanel != null)
+        return aboutPanel;
+
+    aboutPanel = new Ext.Panel({
+        floating: true,
+        modal: true,
+        centered: true,
+        width: 220,
+        height: 180,
+        dockedItems: [
+                    {
+                        dock: 'top',
+                        xtype: 'toolbar',
+                        title: 'О ПРОГРАММЕ',
+                        titleCls: 'x-toolbar-title aboutTitle',
+                        height: 40,
+                        items: [
+                            { xtype: 'spacer' },
+                            { text: 'X', handler: function () {
+                                var dlg = this.ownerCt.ownerCt;
+                                dlg.hide();
+                            },
+                            style: { fontSize: '14pt', fontWeight: 'bold' },
+                            ui: 'round'
+                            }]
+                    }
+            ],
+        html: Ext.getDom('about').innerHTML
+    });
+
+    return aboutPanel;
+
+}
+
+var noInfoPanel = null;
+function getNoInfo() {
+    if (noInfoPanel != null)
+        return noInfoPanel;
+
+    noInfoPanel = new Ext.Panel({
+        floating: true,
+        modal: true,
+        centered: true,
+        width: 220,
+        height: 80,
+        dockedItems: [
+                    {
+                        dock: 'top',
+                        xtype: 'toolbar',
+                        height: 40,
+                        items: [
+                            { xtype: 'spacer' },
+                            { text: 'X', handler: function () {
+                                var dlg = this.ownerCt.ownerCt;
+                                dlg.hide();
+                            },
+                            style: { fontSize: '14pt', fontWeight: 'bold' },
+                            ui: 'round'
+                            }]
+                    }
+            ],
+        html: Ext.getDom('no_info').innerHTML
+    });
+
+    return noInfoPanel;
+
+}
+
 var mapPanel = null;
+var mapList = null;
 function getMapSettings(){
     if (mapPanel != null)
         return mapPanel;
@@ -575,23 +737,32 @@ function getMapSettings(){
     var store = new Ext.data.JsonStore({
         model  : 'mapSettings',
         data: [
-            {name: 'Карта', image: 'map.png'},
-            {name: 'Дорога', image: 'road.png'},
-            {name: 'Спутник', image: 'stallite.png'},
-            {name: 'Гибрид', image: 'hybrid.png'}
+            { name: 'Карта', image: 'map.png' },
+            { name: 'Дорога', image: 'road.png' },
+            { name: 'Спутник', image: 'stallite.png' },
+            { name: 'Гибрид', image: 'hybrid.png' }
         ]
     });
 
-    var list = new Ext.List({ 
-        itemTpl : '{name} <img style="float:right" src="Images/{image}" />',
+    mapList = new Ext.List({ 
+        itemTpl : '<div img="img"></div> {name} <img style="float:right" src="Images/{image}" />',
+        itemCls: 'deSelectedItem',
+        disableSelection: true,
         grouped : false,
         indexBar: false,   
         store: store,
         listeners:{ 
-            itemtap: function(cmp,index,element,e) {
+            itemtap: function(cmp, index, element, e) {
+                var nodes = cmp.getNodes(0, 3);
+                for (var i in nodes) {
+                    try {
+                        Ext.get(nodes[i]).removeCls('selectedItem');
+                    } catch (err) {}
+                }
+                Ext.get(element).addCls('selectedItem');
                 switch(index){
                     case 0:
-                        map.map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
+                        map.map.setMapTypeId("ArcGIS");
                         break;
                     case 1:
                         map.map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
@@ -607,11 +778,17 @@ function getMapSettings(){
         }
     });
 
+    window.setTimeout(function () {
+        try {
+            Ext.get(mapList.getNode(1)).addCls('selectedItem');
+        } catch (err) {}
+    }, 0);
+
     mapPanel = new Ext.Panel({
         floating: true,
         modal: true,
         width: 220,
-        height: 250,
+        height: 270,
         dockedItems: [
                     {
                         dock: 'top',
@@ -638,13 +815,14 @@ function getMapSettings(){
                             }]
                     }
             ],
-        items: [ list ]
+        items: [ mapList ]
     });
 
     return mapPanel;
 }
 
 var objectsPanel = null;
+var objectsStore = null;
 function getObjectsSettings(){
     if (objectsPanel != null)
         return objectsPanel;
@@ -653,48 +831,73 @@ function getObjectsSettings(){
         fields: ['name', 'id', 'state']
     });
 
-    var store = new Ext.data.JsonStore({
+    var objectsStore = new Ext.data.JsonStore({
         model  : 'objSettings',
         data: [
-            { name: 'Видеокамеры', id: 'video', img: 'video', state: false },
-            { name: 'Метеостанции', id: 'meteo', img: 'meteo', state: false },
-            { name: 'Скорость', id: 'sensors', img: 'sensors', state: false },
-            { name: 'АЗС', id: 'poi_azs', img: 'poi_azs', state: false },
-            { name: 'Автомойки', id: 'poi_wash', img: 'poi_wash', state: false },
-            { name: 'СТО', id: 'poi_sto', img: 'poi_sto', state: false },
-            { name: 'Пункты питания', id: 'poi_food', img: 'poi_food', state: false },
-            { name: 'Остановки', id: 'poi_bus', img: 'poi_bus', state: false },
-            { name: 'Места отдыха', id: 'poi_otdyh', img: 'poi_otdyh', state: false },
-            { name: 'Магазины', id: 'poi_shop', img: 'poi_shop', state: false },
-            { name: 'Аварийность', id: 'dtp', img: 'empty', state: false },
-            { name: 'Ремонт', id: 'remont', img: 'empty', state: false }
+            { name: 'Видеокамеры', id: 'video', img: 'video', state: false, zindex: 1 },
+            { name: 'Метеостанции', id: 'meteo', img: 'meteo', state: false, zindex: 1 },
+            { name: 'Скорость', id: 'sensors', img: 'sensors', state: false, zindex: 1 },
+            { name: 'АЗС', id: 'poi_azs', img: 'poi_azs', state: false, zindex: 1 },
+            { name: 'Автомойки', id: 'poi_wash', img: 'poi_wash', state: false, zindex: 1 },
+            { name: 'СТО', id: 'poi_sto', img: 'poi_sto', state: false, zindex: 1 },
+            { name: 'Пункты питания', id: 'poi_food', img: 'poi_food', state: false, zindex: 1 },
+            { name: 'Остановки', id: 'poi_bus', img: 'poi_bus', state: false, zindex: 1 },
+            { name: 'Места отдыха', id: 'poi_otdyh', img: 'poi_otdyh', state: false, zindex: 1 },
+            { name: 'Магазины', id: 'poi_shop', img: 'poi_shop', state: false, zindex: 1 },
+            { name: 'Аварийность', id: 'dtp', img: 'dtp', state: false, zindex: 0 },
+            { name: 'Ремонт', id: 'remont', img: 'remont', state: false, zindex: 0 },
+            { name: 'Ремонт план', id: 'remont_plan', img: 'remont_plan', state: false, zindex: 0 }
         ]
     });
 
     var list = new Ext.List({
-        itemTpl: '<div img="img"></div> <img class="markerInList" src="Images/Markers/{img}.png" /> {name}',
+        itemTpl: '<div img="img"></div> {name} <img style="float:right" class="markerInList" src="Images/Markers/{img}.png" />',
         itemCls: 'deSelectedItem',
+        disableSelection: true,
         grouped: false,
         scroll: 'vertical',
-        height: 240,
-        store: store,
-        disableSelection: true,
-        scroll: 'vertical',
+        height: (Ext.is.Phone ? 240 : 440),
+        store: objectsStore,
         listeners: {
             itemtap: function (cmp, index, element, e) {
-                var layer = layers[cmp.getStore().getAt(index).data.id];
                 cmp.getStore().getAt(index).data.state = !cmp.getStore().getAt(index).data.state;
                 if (cmp.getStore().getAt(index).data.state)
                     Ext.get(element).addCls('selectedItem');
                 else
                     Ext.get(element).removeCls('selectedItem');
-                if (layer != null) {
-                    if (cmp.getStore().getAt(index).data.state)
-                        layer.setMap(map.map);
-                    else
-                        layer.setMap(null);
+                var wasDifferentZIndex = false;
+                var lastZIndex = null;
+                for(var i = 0; i < cmp.getStore().getCount(); i++) {
+                    if (lastZIndex != null && cmp.getStore().getAt(i).data.state && lastZIndex != cmp.getStore().getAt(i).data.zindex) {
+                        wasDifferentZIndex = true;
+                        break;
+                    }
+                    if (cmp.getStore().getAt(i).data.state) 
+                        lastZIndex = cmp.getStore().getAt(i).data.zindex;
                 }
-                cmp.updateLayout();
+                if (!wasDifferentZIndex) {
+                    if (cmp.getStore().getAt(index).data.state)
+                        showLayer(cmp.getStore().getAt(index).data.id);
+                    else
+                        hideLayer(cmp.getStore().getAt(index).data.id);
+                }
+                else
+                {
+                    for(var i = 0; i < cmp.getStore().getCount(); i++) {
+                        if (cmp.getStore().getAt(i).data.state && layers[cmp.getStore().getAt(i).data.id].getMap() != null) 
+                            hideLayer(cmp.getStore().getAt(i).data.id);
+                    }
+                    window.setTimeout(function(){
+                        for(var i = 0; i < objectsStore.getCount(); i++) {
+                            if (objectsStore.getAt(i).data.state && objectsStore.getAt(i).data.zindex == 0) 
+                                showLayer(objectsStore.getAt(i).data.id);
+                        }
+                        for(var i = 0; i < objectsStore.getCount(); i++) {
+                            if (objectsStore.getAt(i).data.state && objectsStore.getAt(i).data.zindex == 1) 
+                                showLayer(objectsStore.getAt(i).data.id);
+                        }
+                    }, 0);
+                }
             }
         }
     });
@@ -703,7 +906,7 @@ function getObjectsSettings(){
         floating: true,
         modal: true,
         width: 220,
-        height: 300,
+        height: (Ext.is.Phone ? 300 : 500),
         dockedItems: [
                     {
                         dock: 'top',
@@ -734,6 +937,18 @@ function getObjectsSettings(){
     });
 
     return objectsPanel;
+}
+
+function showLayer(id) {
+    if (id == 'remont') 
+        layers[id] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont&t=' + (new Date()).getTime(), { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+    if (id == 'remont_plan') 
+        layers[id] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont_plan&t=' + (new Date()).getTime(), { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+    layers[id].setMap(map.map);
+}
+
+function hideLayer(id) {
+    layers[id].setMap(null);
 }
 
 function onSearch() {
@@ -773,9 +988,17 @@ function onGetSearch(result) {
 }
 
 function showProgress() {
+    Ext.getDom('request_progress').style.top = (document.documentElement.clientHeight - 20) + 'px';
+    Ext.getDom('request_progress').style.left = (document.documentElement.clientWidth - 200) + 'px';
+
     Ext.getDom('request_progress').style.display = 'block';
 }
 
 function hideProgress() {
     Ext.getDom('request_progress').style.display = 'none';
+}
+
+function onSearchKeyDown(e) {
+    if (e.keyCode == 13)
+        onSearch();
 }

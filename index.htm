@@ -1,15 +1,17 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-<title>ЦентрАвтоМагистраль</title>
-<link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" />
-<link rel="stylesheet" href="Styles/sencha-touch.css" type="text/css" />
-<link rel="stylesheet" href="Styles/Site.css" type="text/css" />
-<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true&language=ru"></script>
-<script type="text/javascript" src="Scripts/sencha-touch.js" ></script>
-<script type="text/javascript" src="Scripts/index.js" ></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <title>ЦентрАвтоМагистраль</title>
+    <link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="Styles/sencha-touch.css" type="text/css" />
+    <link rel="stylesheet" href="Styles/Site.css" type="text/css" />
+    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true&language=ru"></script>
+    <script type="text/javascript" src="Scripts/sencha-touch.js" ></script>
+    <script type="text/javascript" src="Scripts/index.js" ></script>
+    <script type="text/javascript" src="Scripts/swipe.js" ></script>
+    <script type="text/javascript" src="Scripts/arcgislink.js" ></script>
 </head>
 <body>
     <div style="width:1in" id="dpi"></div>
@@ -70,14 +72,14 @@
                                 <td class="arial10" style="width:20%">
                                     Длина:
                                 </td>
-                                <td class="arial12 bold" id="common_roadLenght">
+                                <td class="arial10 bold" id="common_roadLenght">
                                 </td>
                             </tr>
                             <tr>
                                 <td class="arial10">
                                     Служба:
                                 </td>
-                                <td class="arial10 bold" id="common_service">
+                                <td class="arial8 bold" id="common_service">
                                 </td>
                             </tr>
                             <tr>
@@ -86,10 +88,13 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="arial10">
-                                    Ремонт:
+                                <td class="arial10">Текущий ремонт:</td>
+                                <td class="arial8 bold" id="common_repair">
                                 </td>
-                                <td class="arial10 bold" id="common_repair">
+                            </tr>
+                            <tr>
+                                <td class="arial10">Планируемый ремонт:</td>
+                                <td class="arial8 bold" id="common_future_repair">
                                 </td>
                             </tr>
                             <tr>
@@ -111,13 +116,13 @@
                         <td style="vertical-align:middle" class="arial12 bold">
                             СЕЙЧАС:
                         </td>
-                        <td id="speed_now_l" class="arial12 bold" style="color:Red;text-align:center">
+                        <td id="speed_now_l" class="arial14 bold" style="text-align:center">
                         </td>
-                        <td id="speed_km_l" class="arial12 bold" style="color:Red;text-align:center">
+                        <td id="speed_km_l" class="arial12 bold" style="text-align:center">
                         </td>
-                        <td id="speed_now_r" class="arial12 bold" style="color:Red;text-align:center">
+                        <td id="speed_now_r" class="arial14 bold" style="text-align:center">
                         </td>
-                        <td id="speed_km_r" class="arial12 bold" style="color:Red;text-align:center">
+                        <td id="speed_km_r" class="arial12 bold" style="text-align:center">
                         </td>
                     </tr>
                     <tr>
@@ -135,9 +140,23 @@
                 <table style="margin-top:3px">
                     <tr>
                         <td style="width:1px; padding:0 2px" class="arial10 bold">ОБЫЧНО:</td>
-                        <td style="text-align:center"><img src="Images/Sensors/left.png" onclick="prevSpeedDay()" /></td>
+                        <td style="text-align:center">
+                            <img src="Images/Sensors/left.png" 
+                                ontouchstart="this.src='Images/Sensors/left_down.png'" 
+                                ontouchend="this.src='Images/Sensors/left.png'" 
+                                onmousedown="this.src='Images/Sensors/left_down.png'" 
+                                onmouseup="this.src='Images/Sensors/left.png'" 
+                                onclick="prevSpeedDay()" />
+                        </td>
                         <td style="width:100pt;text-align:center" id="speed_day" class="arial10">ПОНЕДЕЛЬНИК</td>
-                        <td style="text-align:center"><img src="Images/Sensors/right.png" onclick="nextSpeedDay()" /></td>
+                        <td style="text-align:center">
+                            <img src="Images/Sensors/right.png" 
+                                ontouchstart="this.src='Images/Sensors/right_down.png'" 
+                                ontouchend="this.src='Images/Sensors/right.png'" 
+                                onmousedown="this.src='Images/Sensors/right_down.png'" 
+                                onmouseup="this.src='Images/Sensors/right.png'" 
+                                onclick="nextSpeedDay()" />
+                        </td>
                     </tr>
                 </table>
                 <div class="arial12" style="padding:3px" id="speed_name2_l">
@@ -164,20 +183,56 @@
             </div>
         </div>
         <div id="video">
-            <table>
+            <table
+                ontouchstart="touchStart(event,'video_img');"  
+                ontouchend="touchEnd(event);" 
+                ontouchmove="touchMove(event);" 
+                ontouchcancel="touchCancel(event);"                            
+            >
                 <tr>
-                    <td id="video_road" class="arial12" style="text-align:center; padding: 10px 5px"></td>
-                </tr>
-                <tr>
-                    <td style="text-align:center; vertical-align:middle">
-                        <img id="video_img" style="width:200px;height:200px" alt="" />
+                    <td style="text-align:center; padding: 2px">
+                        <img src="Images/Sensors/left.png" 
+                            ontouchstart="this.src='Images/Sensors/left_down.png'" 
+                            ontouchend="this.src='Images/Sensors/left.png'" 
+                            onmousedown="this.src='Images/Sensors/left_down.png'" 
+                            onmouseup="this.src='Images/Sensors/left.png'" 
+                            onclick="onSwipe('', 'left')" />
+                    </td>                    
+                    <td id="video_road" class="arial10" style="text-align:center; padding: 10px 5px"></td>
+                    <td style="text-align:center; padding: 2px">
+                        <img src="Images/Sensors/right.png" 
+                            ontouchstart="this.src='Images/Sensors/right_down.png'" 
+                            ontouchend="this.src='Images/Sensors/right.png'" 
+                            onmousedown="this.src='Images/Sensors/right_down.png'" 
+                            onmouseup="this.src='Images/Sensors/right.png'" 
+                            onclick="onSwipe('', 'right')" />
                     </td>
                 </tr>
-            </table>
+                <tr>
+                    <td style="text-align:center; vertical-align:middle" colspan="3" >
+                            <img id="video_img" style="width:200px;height:200px" alt="" 
+                            />
+                    </td>
+                </tr>
+            </table>            
         </div>
         <div id="search">
-            <input type="text" style="width:145pt; margin: 5px" id="search_text" />
-            <img src="Images/search.png" onclick="onSearch()" />
+            <input type="text" style="width:145pt; margin: 5px" id="search_text" onkeydown="onSearchKeyDown(event)" />
+            <img src="Images/search.png" onclick="onSearch()" style="margin-top: -2px" />
+        </div>
+        <div id="about">
+            <div class="arial10" style="padding:5px">
+                <p>
+                Оперативные данные по федеральным дорогам Московской области: ФГУ «Центральная Россия».
+                </p>
+                <br />
+                <p>
+                Разработка ЗАО «ГИСпроект» (www.gispro.ru). 2011 г.
+                </p>
+            </div>
+        </div>
+        <div id="no_info">
+            <div class="arial12" style="padding:5px; text-align:center">нет информации</div>
         </div>
     </div>
     <div id="request_progress" class="requestProgeress">ожидание ответа сервера...</div>

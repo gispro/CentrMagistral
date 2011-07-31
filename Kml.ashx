@@ -28,9 +28,25 @@ public class Kml : IHttpHandler {
                     )
                 )
             ));
-            var placemarks = sourceKml.Document.Element(ns + "kml").Element(ns + "Document").Element(ns + "Folder").Elements(ns + "Placemark");
+            var placemarks = docElement.Element(ns + "Folder").Elements(ns + "Placemark");
             foreach (var place in placemarks)
                 place.AddFirst(new XElement(ns + "styleUrl", "#style"));
+        }
+        if (kmlName == "remont")
+        {
+            var repairs = DataBase.DataAccessLayer.GetActualRepairs();
+            var placemarks = docElement.Element(ns + "Folder").Elements(ns + "Placemark")
+                .Where(p => p.Element(ns + "name") != null && repairs.Count(r => r.Kremont.ToString() == p.Element(ns + "name").Value) == 0).ToList();
+            foreach (var place in placemarks)
+                place.Remove();
+        }
+        if (kmlName == "remont_plan")
+        {
+            var repairs = DataBase.DataAccessLayer.GetFutureRepairs();
+            var placemarks = docElement.Element(ns + "Folder").Elements(ns + "Placemark")
+                .Where(p => p.Element(ns + "name") != null && repairs.Count(r => r.Kremont.ToString() == p.Element(ns + "name").Value) == 0).ToList();
+            foreach (var place in placemarks)
+                place.Remove();
         }
         sourceKml.Save(context.Response.OutputStream);
     }

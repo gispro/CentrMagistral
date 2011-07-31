@@ -122,5 +122,29 @@ namespace DataBase
                     db.Parameter("@Id", id)).ExecuteList<Repear>();
         }
 
+        public static List<Repear> GetFutureRepairs(int id)
+        {
+            using (DbManager db = new DbManager())
+                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_beg > @CurrDate "
+                    + "AND Kroad=@Id AND remont_pos_beg <> remont_pos_end",
+                    db.Parameter("@CurrDate", DateTime.Now),
+                    db.Parameter("@Id", id)).ExecuteList<Repear>();
+        }
+
+        public static List<Repear> GetFutureRepairs()
+        {
+            using (DbManager db = new DbManager())
+                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_beg < @CurrDate "
+                    + "AND remont_pos_beg <> remont_pos_end",
+                    db.Parameter("@CurrDate", DateTime.Now)).ExecuteList<Repear>();
+        }
+
+        public static List<Repear> GetActualRepairs()
+        {
+            using (DbManager db = new DbManager())
+                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_beg <= @CurrDate AND remont_date_end <= @CurrDate "
+                    + "AND remont_pos_beg <> remont_pos_end",
+                    db.Parameter("@CurrDate", DateTime.Now)).ExecuteList<Repear>();
+        }
     }
 }
