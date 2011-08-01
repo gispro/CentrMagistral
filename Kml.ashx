@@ -48,7 +48,7 @@ public class Kml : IHttpHandler {
             foreach (var place in placemarks)
                 place.Remove();
         }
-        sourceKml.Save(context.Response.OutputStream);
+        sourceKml.Save(new System.IO.StreamWriter(context.Response.OutputStream));
     }
  
     public bool IsReusable 
