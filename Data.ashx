@@ -12,6 +12,7 @@ public class Data : IHttpHandler {
         var id = context.Request.QueryString["id"];
         context.Response.Clear();
         context.Response.ContentType = "application/json";
+        context.Response.Cache.SetNoStore();
         var builder = new System.Text.StringBuilder();
         if (HttpContext.Current.Request.QueryString["callback"] != null)
             builder.AppendFormat("{0}(", HttpContext.Current.Request.QueryString["callback"]);
@@ -37,23 +38,12 @@ public class Data : IHttpHandler {
                 case "repair":
                     BuildRepairData(builder, id);
                     break;
-                case "frepair":
-                    BuildFutureRepairData(builder, id);
-                    break;
             }
         }
         if (HttpContext.Current.Request.QueryString["callback"] != null)
             builder.Append(")");
         context.Response.Write(builder.ToString());
         context.Response.End();
-    }
-
-    private void BuildFutureRepairData(System.Text.StringBuilder builder, string id)
-    {
-        var data = DataBase.DataAccessLayer.GetFutureRepairs(int.Parse(id));
-        var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
-
-        builder.Append(serializer.Serialize(data));
     }
 
     private void BuildRepairData(System.Text.StringBuilder builder, string id)
@@ -162,7 +152,10 @@ public class Data : IHttpHandler {
                 {
                     var date = DataBase.DataConverter.ToDateTime(row[field], DateTime.MinValue);
                     if (date != DateTime.MinValue)
+                    {
                         builder.AppendFormat("new Date({0}, {1}, {2}, {3}, {4}, {5})", date.Year, (date.Month - 1), date.Day, date.Hour, date.Minute, date.Second);
+                        builder.AppendFormat(",{0}Str: \"{1}\"", field.ColumnName, date.ToString("dd.MM.yyyy HH:mm:ss"));
+                    }
                     else
                         builder.AppendFormat("null");
                 }

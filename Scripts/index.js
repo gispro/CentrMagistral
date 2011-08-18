@@ -1,9 +1,8 @@
-﻿var gkey = 'ABQIAAAAv0A5P5E2zR_A7rv2vBK69xRi7uqIlwICDi4n4C7QVazgifWIWBThnk91ohacrrWASrsU4tSqotNTow';
-var map = null;
+﻿var map = null;
 var dpi = 96;
+var emptyUrl = 'Images/empty.png';
 var geoLocationProovider = null;
 var moscow = new google.maps.LatLng(55.748758, 37.6174);
-var url = 'http://89.221.201.176:8080/fedroads';
 var settingsPanel = null;
 var settingsButton = null;
 var layers = [];
@@ -33,7 +32,7 @@ Ext.setup({
             center: moscow,
             streetViewControl: false,
             mapTypeControl: false,
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            mapTypeId: '',
             mapTypeControlOptions: {
                 mapTypeIds: [google.maps.MapTypeId.HYBRID, google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.TERRAIN],
                 style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
@@ -88,7 +87,7 @@ Ext.setup({
         });
 
         layers['video'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=video&icon=video&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['meteo'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=meteo&icon=meteo&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+        layers['meteo'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=meteo&icon=meteo&t=111', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
         layers['poi_sto'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_sto&icon=poi_sto&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
         layers['poi_azs'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_azs&icon=poi_azs&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
         layers['poi_bus'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_bus&icon=poi_bus&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
@@ -99,7 +98,7 @@ Ext.setup({
         layers['sensors'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=sensors&icon=sensors&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
 
         layers['dtp'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=dtp&t=13', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['remont'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont&t=111', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+        layers['remont'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont&t=' + (new Date()).getTime(), { suppressInfoWindows: true, preserveViewport: true, clickable: false });
 
         google.maps.event.addListener(map.map, 'mousedown', function (event) {
             startMouseDown = new Date();
@@ -115,6 +114,9 @@ Ext.setup({
             });
             inRequest = true;
             showProgress();
+            var tolerance = 30;
+            if (map.map.getZoom() <= 8)
+                tolerance = 10;
             var display = screen.width + ',' + screen.height + ',' + dpi;
             Ext.util.JSONP.request({
                 url: 'http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd/MapServer/identify',
@@ -123,7 +125,7 @@ Ext.setup({
                     geometryType: 'esriGeometryPoint',
                     geometry: event.latLng.lng() + ',' + event.latLng.lat(),
                     layers: 'all',
-                    tolerance: 30,
+                    tolerance: tolerance,
                     mapExtent: map.map.getBounds().toUrlValue(),
                     imageDisplay: display,
                     returnGeometry: false,
@@ -134,6 +136,7 @@ Ext.setup({
         });
 
         map.map.mapTypes.set("ArcGIS", new gmaps.ags.MapType("http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/mosobl_osn/MapServer", {name: 'ArcGIS'}) );
+        window.setTimeout(function() { map.map.setMapTypeId("ArcGIS"); }, 1000);
     }
 });
 
@@ -144,6 +147,12 @@ function onIdentity(result) {
     var objects = {};
     var roadName = null;
     var roadId = null;
+    for (var i = 0; i < result.results.length; i++) {
+        if (result.results[i].layerId == 10) {
+            roadId = result.results[i].attributes.Kroad;
+            break;
+        }
+    }
     for (var i = 0; i < result.results.length; i++) {
         if (roadId == null)
             roadId = result.results[i].attributes.Kroad;
@@ -161,12 +170,53 @@ function onIdentity(result) {
                     objects.speed = { id: result.results[i].attributes.Ksensor };
                 break;
             case 3: //АЗС
+                if (objects.services == null && roadId == result.results[i].attributes.Kroad)
+                    objects.services = [];
+                if (roadId == result.results[i].attributes.Kroad)
+                    objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
+                        km: result.results[i].attributes.azs_pos, name: result.results[i].attributes.azs_name, dir: result.results[i].attributes.axis_name });
+                break;
             case 4: //Автобусные остановки
+                if (objects.services == null && roadId == result.results[i].attributes.Kroad)
+                    objects.services = [];
+                if (roadId == result.results[i].attributes.Kroad)
+                    objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
+                        km: result.results[i].attributes.bus_pos, name: result.results[i].attributes.bus_name, dir: result.results[i].attributes.axis_name });
+                break;
             case 5: //Общественное питание
+                if (objects.services == null && roadId == result.results[i].attributes.Kroad)
+                    objects.services = [];
+                if (roadId == result.results[i].attributes.Kroad)
+                    objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
+                        km: result.results[i].attributes.food_pos, name: result.results[i].attributes.food_name, dir: result.results[i].attributes.axis_name });
+                break;
             case 6: //Площадки отдыха 
+                if (objects.services == null && roadId == result.results[i].attributes.Kroad)
+                    objects.services = [];
+                if (roadId == result.results[i].attributes.Kroad)
+                    objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
+                        km: result.results[i].attributes.otdyh_pos, name: 'Площадка отдыха', dir: result.results[i].attributes.axis_name });
+                break;
             case 7: //Магазины
-            case 8://СТО
+                if (objects.services == null && roadId == result.results[i].attributes.Kroad)
+                    objects.services = [];
+                if (roadId == result.results[i].attributes.Kroad)
+                    objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
+                        km: result.results[i].attributes.shop_pos, name: result.results[i].attributes.shop_name, dir: result.results[i].attributes.axis_name });
+                break;
+            case 8: //СТО
+                if (objects.services == null && roadId == result.results[i].attributes.Kroad)
+                    objects.services = [];
+                if (roadId == result.results[i].attributes.Kroad)
+                    objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
+                        km: result.results[i].attributes.sto_pos, name: result.results[i].attributes.sto_name, dir: result.results[i].attributes.axis_name });
+                break;
             case 9: //Автомойки
+                if (objects.services == null && roadId == result.results[i].attributes.Kroad)
+                    objects.services = [];
+                if (roadId == result.results[i].attributes.Kroad)
+                    objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
+                        km: result.results[i].attributes.wash_pos, name: result.results[i].attributes.wash_name, dir: result.results[i].attributes.axis_name });
                 break;
             case 10: // Дороги 
                 objects.common = objects.common != null ? objects.common : {};
@@ -182,8 +232,11 @@ function onIdentity(result) {
                 break;
             case 11: // Км отметки
                 objects.common = objects.common != null ? objects.common : {};
-                if (objects.common.km == null && roadId == result.results[i].attributes.Kroad) {
-                    objects.common.km = result.results[i].attributes.km;
+                if (objects.common.km1 == null && roadId == result.results[i].attributes.Kroad) {
+                    objects.common.km1 = result.results[i].attributes.km;
+                    objects.common.km2 = result.results[i].attributes.km2;
+                    objects.common.dir1 = result.results[i].attributes.Direction1;
+                    objects.common.dir2 = result.results[i].attributes.Direction2;
                 }
                 break;
             case 12: // Ремонт
@@ -223,13 +276,17 @@ function getDialogOptions() {
 function showInfoWindow(objects, roadName) {
     var buttons = [];
     if (objects.common != null)
-        buttons.push({ text: 'Общее', pressed: true, handler: Ext.util.Functions.createDelegate(onCommonClick, objects.common) });
+        buttons.push({ icon: 'Images/Tabs/common.png', iconCls: 'tabIcon', pressed: true, handler: Ext.util.Functions.createDelegate(onCommonClick, objects.common) });
     if (objects.meteo != null)
-        buttons.push({ text: 'Метео', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onMeteoClick, objects.meteo) });
+        buttons.push({ icon: 'Images/Tabs/meteo.png', iconCls: 'tabIcon', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onMeteoClick, objects.meteo) });
     if (objects.video != null) 
-        buttons.push({ text: 'Видео', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onVideoClick, objects.video) });
+        buttons.push({ icon: 'Images/Tabs/video.png', iconCls: 'tabIcon', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onVideoClick, objects.video) });
     if (objects.speed != null)
-        buttons.push({ text: 'Скорость', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onSpeedClick, objects.speed) });
+        buttons.push({ icon: 'Images/Tabs/speed.png', iconCls: 'tabIcon', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onSpeedClick, objects.speed) });
+    if (objects.common != null)
+        buttons.push({ icon: 'Images/Tabs/remont.png', iconCls: 'tabIcon', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onRepairClick, objects.common) });
+    if (objects.services != null)
+        buttons.push({ icon: 'Images/Tabs/service.png', iconCls: 'tabIcon', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onServicesClick, { common: objects.common, services: objects.services} ) });
 
     var panelOptions = getDialogOptions();
     var segment = [{
@@ -240,7 +297,7 @@ function showInfoWindow(objects, roadName) {
     var toolbar = new Ext.Toolbar({
         ui: 'light',
         dock: 'top',
-        items: [ segment ]
+        items: [ {xtype: 'spacer'}, segment, {xtype: 'spacer'} ]
     })
     panelOptions.dockedItems = [
                     {
@@ -377,6 +434,7 @@ function showVideoImage(dir) {
 function setVideoImage() {
     dialogPanel.removeAll();
     Ext.getDom('video_img').src = videoData[currVideoIndex].image;
+    Ext.getDom('video_time').innerHTML = videoData[currVideoIndex].load_timeStr;
     lastVideoPanel = new Ext.Panel({ html: Ext.getDom('video').innerHTML, listeners : { swipe : function(c) { alert(c.direction); } } });
     dialogPanel.add(lastVideoPanel);
     dialogPanel.doLayout();
@@ -473,11 +531,11 @@ function updateDay() {
     if (haveL)
         Ext.getDom('speed_usualy_l').src = 'Images/Sensors/b/' + currSensor + '_' + currDay + '_b.png';
     else
-        Ext.getDom('speed_usualy_l').src = 'Images/empty.png';
+        Ext.getDom('speed_usualy_l').src = emptyUrl;
     if (haveR)
         Ext.getDom('speed_usualy_r').src = 'Images/Sensors/a/' + currSensor + '_' + currDay + '_a.png';
     else
-        Ext.getDom('speed_usualy_r').src = 'Images/empty.png';
+        Ext.getDom('speed_usualy_r').src = emptyUrl;
     dialogPanel.removeAll();
     dialogPanel.add(new Ext.Panel({ html: Ext.getDom('speed').innerHTML }));
     dialogPanel.doLayout();
@@ -496,7 +554,10 @@ function prevSpeedDay() {
 function onCommonClick() {
     lastVideoPanel = null;
     Ext.getDom('common_road').innerHTML = this.road;
-    Ext.getDom('common_km').innerHTML = this.km == null ? ('') : (this.km + '-й км');
+    Ext.getDom('common_km1').innerHTML = this.km1 == null ? ('') : (this.km1 + '-й км');
+    Ext.getDom('common_dir1').innerHTML = this.dir1 == null ? ('') : (this.dir1);
+    Ext.getDom('common_km2').innerHTML = this.km2 == null ? ('') : (this.km2 + '-й км');
+    Ext.getDom('common_dir2').innerHTML = this.dir2 == null ? ('') : (this.dir2);
     Ext.getDom('common_roadLenght').innerHTML = this.roadLength + ' км';
     Ext.getDom('common_service').innerHTML = this.service;
     Ext.getDom('common_servicePhone').innerHTML = this.servicePhone;
@@ -504,48 +565,117 @@ function onCommonClick() {
     dialogPanel.removeAll();
     dialogPanel.add(new Ext.Panel({ html: Ext.getDom('common').innerHTML }));
     dialogPanel.doLayout();
+}
+
+var servicesInfo = null;
+var currentService = -1;
+var servicesDisplay = null;
+var leftName = null;
+var rightName = null;
+function onServicesClick() {
+    servicesInfo = this;
+    leftName = servicesInfo.common.dir1;
+    rightName = servicesInfo.common.dir2;
+    currentService = -1;
+    servicesDisplay = [];
+    var lastLayerId = null;
+    for(var i = 0; i < servicesInfo.services.length; i++) {
+        if (lastLayerId != servicesInfo.services[i].layer) {
+            var displayObj = { };
+            switch(servicesInfo.services[i].layer) {
+                case 3: displayObj.img = 'Images/Markers/poi_azs.png'; break;
+                case 4: displayObj.img = 'Images/Markers/poi_bus.png'; break;
+                case 5: displayObj.img = 'Images/Markers/poi_food.png'; break;
+                case 6: displayObj.img = 'Images/Markers/poi_otdyh.png'; break;
+                case 7: displayObj.img = 'Images/Markers/poi_shop.png'; break;
+                case 8: displayObj.img = 'Images/Markers/poi_sto.png'; break;
+                case 9: displayObj.img = 'Images/Markers/poi_wash.png'; break;
+            }
+            displayObj.name = servicesInfo.services[i].layerName;
+            displayObj.left = [];
+            displayObj.right = [];
+
+            if (servicesInfo.services[i].dir == 'слева')
+                displayObj.left.push(servicesInfo.services[i]);
+            else    
+                displayObj.right.push(servicesInfo.services[i]);
+            servicesDisplay.push(displayObj);
+            lastLayerId = servicesInfo.services[i].layer;
+        } else {
+            if (servicesInfo.services[i].dir == 'слева')
+                displayObj.left.push(servicesInfo.services[i]);
+            else    
+                displayObj.right.push(servicesInfo.services[i]);
+        }
+    }
+    onServiceNext('right');
+}
+
+function onServiceNext(dir) {
+    if (dir == 'left')
+        currentService = currentService > 0 ? (currentService - 1) : 0;
+    else
+        currentService = currentService < (servicesDisplay.length - 1) ? (currentService + 1) : (servicesDisplay.length - 1);
+
+    if (currentService == 0)
+        Ext.getDom('services_left').src = emptyUrl;
+    else
+        Ext.getDom('services_left').src = servicesDisplay[currentService - 1].img;
+    if (currentService == servicesDisplay.length - 1)
+        Ext.getDom('services_right').src = emptyUrl;
+    else
+        Ext.getDom('services_right').src = servicesDisplay[currentService + 1].img;
+    Ext.getDom('services_center').src = servicesDisplay[currentService].img;
+    Ext.getDom('services_layer_name').innerHTML = servicesDisplay[currentService].name;
+
+    var str = '';
+    str += buildServicesList(servicesDisplay[currentService].left, leftName);
+    str += buildServicesList(servicesDisplay[currentService].right, rightName);
+    Ext.getDom('services_list').innerHTML = str;
+
+    dialogPanel.removeAll();
+    dialogPanel.add(new Ext.Panel({ html: Ext.getDom('services').innerHTML }));
+    dialogPanel.doLayout();
+}
+
+function buildServicesList(list, name) {
+    var str = '';
+    if (list.length > 0) {
+        str += '<span class="arial11 bold">' + name + '</span><br />';
+        for (var i = 0; i < list.length; i++) {
+            str += '<span class="arial10 bold">' + list[i].km + ' км:</span>';
+            str += '  <span class="arial10">' + list[i].name + '</span><br />';
+        }
+    }
+    return str;
+}
+
+function onRepairClick() {
+    dialogPanel.removeAll();
+    Ext.getDom('repair_content').innerHTML = '';
+    dialogPanel.add(new Ext.Panel({ html: Ext.getDom('repair').innerHTML }));
+    dialogPanel.doLayout();
     Ext.util.JSONP.request({
         url: 'Data.ashx',
         callbackKey: 'callback',
         params: { source: 'repair', id: this.roadId },
         callback: Ext.util.Functions.createDelegate(onGetRepairData, { })
     });
-    Ext.util.JSONP.request({
-        url: 'Data.ashx',
-        callbackKey: 'callback',
-        params: { source: 'frepair', id: this.roadId },
-        callback: Ext.util.Functions.createDelegate(onGetFutureRepairData, { })
-    });
 }
 
 function onGetRepairData(result) {
     var str = "";
     for (var i = 0; i < result.length; i++) {
-        if (i > 0)
-            str += ', ';
-        str += (result[i].Start + ' - ' + result[i].End + ' км');
+        if (result[i].Descr != null && result[i].Descr != '')
+            str += '<span class="arial10 bold">' + result[i].Descr + '</span><br/>';
+        str += '<span class="arial10 bold">' + 
+            + result[i].Start + ' - ' + result[i].End + ' км:</span>  <span class="arial10">' + result[i].StartDateStr + ' - ' + result[i].EndDateStr + '</span><br/>';
     }
     if (str == "")
         str = "нет ремонта";
-    Ext.getDom('common_repair').innerHTML = str;
+    Ext.getDom('repair_content').innerHTML = str;
     dialogPanel.removeAll();
-    dialogPanel.add(new Ext.Panel({ html: Ext.getDom('common').innerHTML }));
-    dialogPanel.doLayout();
-}
-
-function onGetFutureRepairData(result) {
-    var str = "";
-    for (var i = 0; i < result.length; i++) {
-        if (i > 0)
-            str += ', ';
-        str += (result[i].Start + ' - ' + result[i].End + ' км ');
-        str += ('<span class="reg">(с ' + result[i].StartDateStr + ')</span>');
-    }
-    if (str == "")
-        str = "нет ремонта";
-    Ext.getDom('common_future_repair').innerHTML = str;
-    dialogPanel.removeAll();
-    dialogPanel.add(new Ext.Panel({ html: Ext.getDom('common').innerHTML }));
+    dialogPanel.add(new Ext.Panel({ html: Ext.getDom('repair').innerHTML }));
     dialogPanel.doLayout();
 }
 
@@ -780,7 +910,7 @@ function getMapSettings(){
 
     window.setTimeout(function () {
         try {
-            Ext.get(mapList.getNode(1)).addCls('selectedItem');
+            Ext.get(mapList.getNode(0)).addCls('selectedItem');
         } catch (err) {}
     }, 0);
 
@@ -875,29 +1005,30 @@ function getObjectsSettings(){
                     if (cmp.getStore().getAt(i).data.state) 
                         lastZIndex = cmp.getStore().getAt(i).data.zindex;
                 }
-                if (!wasDifferentZIndex) {
+                //if (!wasDifferentZIndex) {
                     if (cmp.getStore().getAt(index).data.state)
                         showLayer(cmp.getStore().getAt(index).data.id);
                     else
                         hideLayer(cmp.getStore().getAt(index).data.id);
-                }
-                else
-                {
-                    for(var i = 0; i < cmp.getStore().getCount(); i++) {
-                        if (cmp.getStore().getAt(i).data.state && layers[cmp.getStore().getAt(i).data.id].getMap() != null) 
-                            hideLayer(cmp.getStore().getAt(i).data.id);
-                    }
-                    window.setTimeout(function(){
-                        for(var i = 0; i < objectsStore.getCount(); i++) {
-                            if (objectsStore.getAt(i).data.state && objectsStore.getAt(i).data.zindex == 0) 
-                                showLayer(objectsStore.getAt(i).data.id);
-                        }
-                        for(var i = 0; i < objectsStore.getCount(); i++) {
-                            if (objectsStore.getAt(i).data.state && objectsStore.getAt(i).data.zindex == 1) 
-                                showLayer(objectsStore.getAt(i).data.id);
-                        }
-                    }, 0);
-                }
+//                }
+//                else
+//                {
+//                    for(var i = 0; i < cmp.getStore().getCount(); i++) {
+//                        if (cmp.getStore().getAt(i).data.state && layers[cmp.getStore().getAt(i).data.id].getMap() != null) 
+//                            hideLayer(cmp.getStore().getAt(i).data.id);
+//                    }
+//                    window.setTimeout(function() {
+//                    for(var i = 0; i < objectsStore.getCount(); i++) {
+//                        if (objectsStore.getAt(i).data.state && objectsStore.getAt(i).data.zindex == 0) 
+//                            showLayer(objectsStore.getAt(i).data.id);
+//                    }
+//                    for(var i = 0; i < objectsStore.getCount(); i++) {
+//                        if (objectsStore.getAt(i).data.state && objectsStore.getAt(i).data.zindex == 1) 
+//                            showLayer(objectsStore.getAt(i).data.id);
+//                    }
+//                    }, 0);
+
+//                }
             }
         }
     });

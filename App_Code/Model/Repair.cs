@@ -4,7 +4,7 @@ using System.Linq;
 using System.Web;
 using BLToolkit.Mapping;
 
-public class Repear
+public class Repair
 {
     [MapField("remont_pos_beg")]
 	public double? Start { get; set; }
@@ -17,6 +17,8 @@ public class Repear
     public DateTime? StartDate { get; set; }
     [MapField("remont_date_end")]
     public DateTime? EndDate { get; set; }
+    [MapField("remont_prim")]
+    public string Descr { get; set; }
 
     [MapIgnore]
     public string StartDateStr { get { return StartDate != null ? StartDate.Value.ToShortDateString() : string.Empty; } }

@@ -113,38 +113,27 @@ namespace DataBase
                     db.Parameter("@Sensor", sensor)).ExecuteObject<Speed>();
         }
 
-        public static List<Repear> GetRepairs(int id)
+        public static List<Repair> GetRepairs(int id)
         {
             using (DbManager db = new DbManager())
-                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_beg <= @CurrDate AND remont_date_end <= @CurrDate " 
-                    + "AND Kroad=@Id AND remont_pos_beg <> remont_pos_end", 
-                    db.Parameter("@CurrDate", DateTime.Now),
-                    db.Parameter("@Id", id)).ExecuteList<Repear>();
+                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_end >= @CurrDate AND Kroad=@Id", 
+                    db.Parameter("@CurrDate", DateTime.Today),
+                    db.Parameter("@Id", id)).ExecuteList<Repair>();
         }
 
-        public static List<Repear> GetFutureRepairs(int id)
-        {
-            using (DbManager db = new DbManager())
-                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_beg > @CurrDate "
-                    + "AND Kroad=@Id AND remont_pos_beg <> remont_pos_end",
-                    db.Parameter("@CurrDate", DateTime.Now),
-                    db.Parameter("@Id", id)).ExecuteList<Repear>();
-        }
-
-        public static List<Repear> GetFutureRepairs()
+        public static List<Repair> GetFutureRepairs()
         {
             using (DbManager db = new DbManager())
                 return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_beg < @CurrDate "
                     + "AND remont_pos_beg <> remont_pos_end",
-                    db.Parameter("@CurrDate", DateTime.Now)).ExecuteList<Repear>();
+                    db.Parameter("@CurrDate", DateTime.Now)).ExecuteList<Repair>();
         }
 
-        public static List<Repear> GetActualRepairs()
+        public static List<Repair> GetActualRepairs()
         {
             using (DbManager db = new DbManager())
-                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_beg <= @CurrDate AND remont_date_end <= @CurrDate "
-                    + "AND remont_pos_beg <> remont_pos_end",
-                    db.Parameter("@CurrDate", DateTime.Now)).ExecuteList<Repear>();
+                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_beg <= @CurrDate AND remont_date_end >= @CurrDate",
+                    db.Parameter("@CurrDate", DateTime.Today)).ExecuteList<Repair>();
         }
     }
 }

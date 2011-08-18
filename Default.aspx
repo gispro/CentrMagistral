@@ -1,9 +1,11 @@
-﻿<!DOCTYPE html>
+﻿<%@ Page Language="C#" AutoEventWireup="true"  CodeFile="Default.aspx.cs" Inherits="_Default" %>
+
+<!DOCTYPE html>
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-    <title>ЦентрАвтоМагистраль</title>
+    <title>ЦентрМагистраль</title>
     <link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="Styles/sencha-touch.css" type="text/css" />
     <link rel="stylesheet" href="Styles/Site.css" type="text/css" />
@@ -14,6 +16,10 @@
     <script type="text/javascript" src="Scripts/arcgislink.js" ></script>
 </head>
 <body>
+    <script type="text/javascript">
+        var gkey = '<%=System.Configuration.ConfigurationManager.AppSettings["gkey"]%>';
+        var url = '<%=System.Configuration.ConfigurationManager.AppSettings["url"]%>';
+    </script>
     <div style="width:1in" id="dpi"></div>
     <div style="display:none">
         <div id="meteo">
@@ -59,53 +65,87 @@
         <div id="common">
             <table class="stTable">
                 <tr>
-                    <td style="width:50%;text-align:center">
-                        <span id="common_road" class="arial10 bold"></span>
+                    <td style="width:10%;text-align:center;vertical-align:middle" rowspan="2">
+                        <span id="common_road" class="arial12 bold"></span>
                     </td>
-                    <td class="arial16 bold" id="common_km" style="text-align:center;vertical-align:middle">
+                    <td class="arial11 bold" id="common_km1" style="text-align:center;vertical-align:middle">
+                    </td>
+                    <td class="arial10" id="common_dir1" style="text-align:center;vertical-align:middle">
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="2" class="topLine">
+                    <td class="arial11 bold" id="common_km2" style="text-align:center;vertical-align:middle">
+                    </td>
+                    <td class="arial10" id="common_dir2" style="text-align:center;vertical-align:middle">
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="topLine">
                         <table>
-                            <tr>
-                                <td class="arial10" style="width:20%">
-                                    Длина:
-                                </td>
-                                <td class="arial10 bold" id="common_roadLenght">
-                                </td>
-                            </tr>
                             <tr>
                                 <td class="arial10">
                                     Служба:
                                 </td>
-                                <td class="arial8 bold" id="common_service">
+                                <td class="arial10 bold" id="common_service">
                                 </td>
                             </tr>
                             <tr>
                                 <td />
-                                <td class="arial10" id="common_servicePhone">
+                                <td class="arial11" id="common_servicePhone">
                                 </td>
                             </tr>
                             <tr>
-                                <td class="arial10">Текущий ремонт:</td>
-                                <td class="arial8 bold" id="common_repair">
+                                <td class="arial10" style="width:20%">
+                                    Участок<br/>обслуживания:
                                 </td>
-                            </tr>
-                            <tr>
-                                <td class="arial10">Планируемый ремонт:</td>
-                                <td class="arial8 bold" id="common_future_repair">
+                                <td class="arial11 bold" style="vertical-align:middle" id="common_roadLenght">
                                 </td>
                             </tr>
                             <tr>
                                 <td class="arial10">
                                     Аварийность:
                                 </td>
-                                <td class="arial10 bold" id="common_dtp">
+                                <td class="arial11 bold" id="common_dtp">
                                 </td>
                             </tr>
                         </table>
                     </td>
+                </tr>
+            </table>
+        </div>
+        <div id="repair">
+            <div class="arial12 bold center" style="padding:4px">РЕМОНТ</div>
+            <div id="repair_content" style="padding:0 5px;text-align:center">
+            </div>
+        </div>
+        <div id="services">
+            <table>
+                <tr>
+                    <td style="text-align:center; padding: 2px">
+                        <img src="Images/Sensors/left.png" 
+                            ontouchstart="this.src='Images/Sensors/left_down.png'" 
+                            ontouchend="this.src='Images/Sensors/left.png'" 
+                            onmousedown="this.src='Images/Sensors/left_down.png'" 
+                            onmouseup="this.src='Images/Sensors/left.png'" 
+                            onclick="onServiceNext('left')" />
+                    </td>                    
+                    <td style="text-align:center;width:20px"><img id="services_left" style="width:32px;height:37px;margin:5px 10px" alt="" src="Images/Markers/poi_azs.png" /></td>
+                    <td style="text-align:center;width:20px"><img id="services_center" style="width:42px;height:47px;margin:5px 10px" alt="" src="Images/Markers/poi_azs.png" /></td>
+                    <td style="text-align:center;width:20px"><img id="services_right" style="width:32px;height:37px;margin:5px 10px" alt="" src="Images/Markers/poi_azs.png" /></td>
+                    <td style="text-align:center; padding: 2px">
+                        <img src="Images/Sensors/right.png" 
+                            ontouchstart="this.src='Images/Sensors/right_down.png'" 
+                            ontouchend="this.src='Images/Sensors/right.png'" 
+                            onmousedown="this.src='Images/Sensors/right_down.png'" 
+                            onmouseup="this.src='Images/Sensors/right.png'" 
+                            onclick="onServiceNext('right')" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6" id="services_layer_name" class="arial12 bold center"></td>
+                </tr>
+                <tr>
+                    <td colspan="6" id="services_list" class="center"></td>
                 </tr>
             </table>
         </div>
@@ -190,6 +230,9 @@
                 ontouchcancel="touchCancel(event);"                            
             >
                 <tr>
+                    <td id="video_road" class="arial10 bold" style="text-align:center; padding: 10px 5px" colspan="3"></td>
+                </tr>
+                <tr>
                     <td style="text-align:center; padding: 2px">
                         <img src="Images/Sensors/left.png" 
                             ontouchstart="this.src='Images/Sensors/left_down.png'" 
@@ -198,7 +241,7 @@
                             onmouseup="this.src='Images/Sensors/left.png'" 
                             onclick="onSwipe('', 'left')" />
                     </td>                    
-                    <td id="video_road" class="arial10" style="text-align:center; padding: 10px 5px"></td>
+                    <td id="video_time" class="arial10" style="text-align:center; padding: 10px 5px"></td>
                     <td style="text-align:center; padding: 2px">
                         <img src="Images/Sensors/right.png" 
                             ontouchstart="this.src='Images/Sensors/right_down.png'" 
@@ -210,8 +253,7 @@
                 </tr>
                 <tr>
                     <td style="text-align:center; vertical-align:middle" colspan="3" >
-                            <img id="video_img" style="width:200px;height:200px" alt="" 
-                            />
+                            <img id="video_img" style="width:200px;height:150px" alt="" />
                     </td>
                 </tr>
             </table>            

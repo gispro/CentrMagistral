@@ -8,7 +8,7 @@ using System.Xml.Linq;
 
 public class Kml : IHttpHandler {
 
-    string url = "http://89.221.201.176:8080/fedroads";
+    string url = System.Configuration.ConfigurationManager.AppSettings["url"];
     XNamespace ns = "http://earth.google.com/kml/2.2";
     
     public void ProcessRequest (HttpContext context) 
