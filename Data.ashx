@@ -38,12 +38,23 @@ public class Data : IHttpHandler {
                 case "repair":
                     BuildRepairData(builder, id);
                     break;
+                case "common":
+                    BuildCommonData(builder, id, context.Request.QueryString["km"]);
+                    break;
             }
         }
         if (HttpContext.Current.Request.QueryString["callback"] != null)
             builder.Append(")");
         context.Response.Write(builder.ToString());
         context.Response.End();
+    }
+
+    private void BuildCommonData(System.Text.StringBuilder builder, string id, string km)
+    {
+        var data = DataBase.DataAccessLayer.GetCommon(int.Parse(id), double.Parse(km, System.Globalization.CultureInfo.InvariantCulture));
+        var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
+
+        builder.Append(serializer.Serialize(data));
     }
 
     private void BuildRepairData(System.Text.StringBuilder builder, string id)

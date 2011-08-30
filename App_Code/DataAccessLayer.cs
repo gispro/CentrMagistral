@@ -116,7 +116,7 @@ namespace DataBase
         public static List<Repair> GetRepairs(int id)
         {
             using (DbManager db = new DbManager())
-                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_end >= @CurrDate AND Kroad=@Id", 
+                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_end >= @CurrDate AND Kroad=@Id AND remont_pos_beg <> remont_pos_end", 
                     db.Parameter("@CurrDate", DateTime.Today),
                     db.Parameter("@Id", id)).ExecuteList<Repair>();
         }
@@ -132,8 +132,19 @@ namespace DataBase
         public static List<Repair> GetActualRepairs()
         {
             using (DbManager db = new DbManager())
-                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_beg <= @CurrDate AND remont_date_end >= @CurrDate",
+                return db.SetCommand(@"SELECT * FROM GP_remont WHERE remont_date_end >= @CurrDate AND remont_pos_beg <> remont_pos_end",
                     db.Parameter("@CurrDate", DateTime.Today)).ExecuteList<Repair>();
+        }
+
+        public static Common GetCommon(int roadId, double km)
+        {
+            using (DbManager db = new DbManager())
+                return db.SetCommand(@"SELECT TOP 1 r.road_titul as RoadName, r.Kroad, " +
+                    "o.org_name as ServiceName, o.org_phone as ServicePhone, o.road_pos_beg as ServiceKmBeg, o.road_pos_end as ServiceKmEnd, " +
+                    "g.org_name as GIBDDName, g.org_phone as GIBDDPhone, g.org_address as GIBDDAddress " +
+                    "FROM GP_road r LEFT JOIN GP_org_road o ON (r.Kroad=o.Kroad AND o.road_pos_beg <= @km AND @km <= o.road_pos_end) " +
+                    "LEFT JOIN GP_gibdd_road g ON(r.Kroad=g.Kroad AND g.road_pos_beg <= @km AND @km <= g.road_pos_end)  WHERE r.Kroad=@Kroad",
+                    db.Parameter("@Kroad", roadId), db.Parameter("@km", km)).ExecuteObject<Common>();
         }
     }
 }

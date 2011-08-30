@@ -27,6 +27,7 @@ public class MeteoData
     public double? C03_TD { get; set; }
     public double? C05_P { get; set; }
     public double? C10_WS { get; set; }
+    public double? C12_WSmax { get; set; }
     public int? C11_WD { get; set; }
     public double? C21_RI { get; set; }
     public string C22_RS_name { get; set; }
@@ -37,7 +38,19 @@ public class MeteoData
     public string rain_name { get; set; }
 
     [MapIgnore]
-    public string Surface
+    public string Surface1
+    {
+        get
+        {
+            if (L10_surf_name == null)
+                return "Н/Д";
+
+            return L10_surf_name;
+        }
+    }
+
+    [MapIgnore]
+    public string Surface2
     {
         get
         {
@@ -105,6 +118,30 @@ public class MeteoData
                 return "Н/Д";
 
             return C10_WS.Value.ToString();
+        }
+    }
+
+    [MapIgnore]
+    public string WindSpeedMax
+    {
+        get
+        {
+            if (C12_WSmax == null)
+                return "Н/Д";
+
+            return C12_WSmax.Value.ToString();
+        }
+    }
+
+    [MapIgnore]
+    public string Time
+    {
+        get
+        {
+            if (this.Data_Time == null)
+                return "Н/Д";
+
+            return this.Data_Time.ToString();
         }
     }
 

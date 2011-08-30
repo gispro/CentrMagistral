@@ -40,14 +40,6 @@ public class Kml : IHttpHandler {
             foreach (var place in placemarks)
                 place.Remove();
         }
-        if (kmlName == "remont_plan")
-        {
-            var repairs = DataBase.DataAccessLayer.GetFutureRepairs();
-            var placemarks = docElement.Element(ns + "Folder").Elements(ns + "Placemark")
-                .Where(p => p.Element(ns + "name") != null && repairs.Count(r => r.Kremont.ToString() == p.Element(ns + "name").Value) == 0).ToList();
-            foreach (var place in placemarks)
-                place.Remove();
-        }
         sourceKml.Save(new System.IO.StreamWriter(context.Response.OutputStream));
     }
  

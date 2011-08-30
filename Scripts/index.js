@@ -6,6 +6,8 @@ var moscow = new google.maps.LatLng(55.748758, 37.6174);
 var settingsPanel = null;
 var settingsButton = null;
 var layers = [];
+var markers = [];
+var lastDiff = 0;
 var dialogPanel = null;
 var inRequest = false;
 var startMouseDown = new Date();
@@ -86,22 +88,24 @@ Ext.setup({
             items: [map]
         });
 
-        layers['video'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=video&icon=video&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['meteo'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=meteo&icon=meteo&t=111', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['poi_sto'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_sto&icon=poi_sto&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['poi_azs'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_azs&icon=poi_azs&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['poi_bus'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_bus&icon=poi_bus&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['poi_food'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_food&icon=poi_food&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['poi_otdyh'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_otdyh&icon=poi_otdyh&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['poi_shop'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_shop&icon=poi_shop&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['poi_wash'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_wash&icon=poi_wash&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-        layers['sensors'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=sensors&icon=sensors&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+//        layers['video'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=video&icon=video&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+//        layers['meteo'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=meteo&icon=meteo&t=111', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+//        layers['poi_sto'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_sto&icon=poi_sto&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+//        layers['poi_azs'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_azs&icon=poi_azs&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });        
+//        layers['poi_bus'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_bus&icon=poi_bus&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+//        layers['poi_food'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_food&icon=poi_food&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+//        layers['poi_otdyh'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_otdyh&icon=poi_otdyh&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+//        layers['poi_shop'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_shop&icon=poi_shop&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+//        layers['poi_wash'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_wash&icon=poi_wash&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+//        layers['sensors'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=sensors&icon=sensors&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
 
-        layers['dtp'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=dtp&t=13', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
         layers['remont'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont&t=' + (new Date()).getTime(), { suppressInfoWindows: true, preserveViewport: true, clickable: false });
 
         google.maps.event.addListener(map.map, 'mousedown', function (event) {
             startMouseDown = new Date();
+        });
+        google.maps.event.addListener(map.map, 'zoom_changed', function (event) {
+            relocateMarkers();
         });
         google.maps.event.addListener(map.map, 'mouseup', function (event) {
             if (inRequest || (new Date()).getTime() - startMouseDown.getTime() > 500)
@@ -119,7 +123,7 @@ Ext.setup({
                 tolerance = 10;
             var display = screen.width + ',' + screen.height + ',' + dpi;
             Ext.util.JSONP.request({
-                url: 'http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd/MapServer/identify',
+                url: 'http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events/MapServer/identify',
                 callbackKey: 'callback',
                 params: {
                     geometryType: 'esriGeometryPoint',
@@ -140,12 +144,117 @@ Ext.setup({
     }
 });
 
+function getPOIIndex(poiName) {
+    switch(poiName) {
+        default:
+        case 'meteo': return 0;
+        case 'video': return 1;
+        case 'sensors': return 2;
+        case 'poi_azs': return 3;
+        case 'poi_bus': return 4;
+        case 'poi_food': return 5;
+        case 'poi_otdyh': return 6;
+        case 'poi_shop': return 7;
+        case 'poi_sto': return 8;
+        case 'poi_wash': return 9;
+   }
+}
+
+function showHideMarkers(poiName) {
+    if (markers[poiName] == null) {
+        Ext.util.JSONP.request({
+            url: 'http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events/MapServer/' + getPOIIndex(poiName) + '/query',
+            callbackKey: 'callback',
+            params: { 
+                text: '',
+                geometry: '',
+                geometryType: 'esriGeometryEnvelope',
+                inSR: '',
+                spatialRel: 'esriSpatialRelIntersects',
+                where: '1=1',
+                returnGeometry: true,
+                outSR: '',
+                f: 'pjson'
+            },
+            callback: Ext.util.Functions.createDelegate(onGetMarkers, { poiName: poiName })
+        });
+    } else {
+        if (markers[poiName].state) {
+            for (var i = 0; i < markers[poiName].visible.length; i++) 
+                    markers[poiName].visible[i].setVisible(false);
+        } else
+            showMarkers(poiName);
+        markers[poiName].state = !markers[poiName].state;
+    }
+}
+
+function getMarkersDiff() {
+    if (map.map.getZoom() < 7)
+        return 0.07;
+    if (map.map.getZoom() < 10)
+        return 0.05;
+    else if (map.map.getZoom() == 10)
+        return 0.01;
+    else if (map.map.getZoom() <= 15)
+        return 0.005;
+    else if (map.map.getZoom() <= 20)
+        return 0.0000000005;
+}
+
+function showMarkers(poiName) {
+    var diff = getMarkersDiff();
+    markers[poiName].visible.length = 0;
+    for (var i = 0; i < markers[poiName].markers.length; i++) {
+        var show = true;
+        for (var j = 0; j < markers[poiName].visible.length; j++) {
+            if (Math.abs(markers[poiName].markers[i].getPosition().lat() - markers[poiName].visible[j].getPosition().lat()) < diff
+            && Math.abs(markers[poiName].markers[i].getPosition().lng() - markers[poiName].visible[j].getPosition().lng()) < diff)
+            show = false;
+        }
+        markers[poiName].markers[i].setVisible(show);
+        if (show)
+            markers[poiName].visible.push(markers[poiName].markers[i]);
+    }
+}
+
+function relocateMarkers() {
+    var diff = getMarkersDiff();
+    if (lastDiff == diff)
+        return;
+    for (var ind in markers) {
+        if (markers[ind].state && markers[ind].markers.length > 50) {                
+            if (lastDiff > diff && markers[ind].markers.length == markers[ind].visible.lrngth) 
+                continue;
+            showMarkers(ind);
+        }
+    }
+    lastDiff = diff;
+}
+
+function onGetMarkers(result) {
+    markers[this.poiName] = { state: false, markers: [], visible: [] };
+    for (var i = 0; i < result.features.length; i++) {
+        var coord = new google.maps.LatLng(result.features[i].geometry.y, result.features[i].geometry.x);
+        var marker = new google.maps.Marker({
+            icon: 'Images/Markers/' + this.poiName + '.png',
+            position: coord,
+            flat: true,
+            raiseOnDrag: false,
+            clickable: false,
+            optimized: true,
+            visible: false,
+            map: map.map,
+        });
+        markers[this.poiName].markers[i] = marker;                        
+    }
+    showHideMarkers(this.poiName);
+}
+
 function onIdentity(result) {
     hideProgress();
     identityMarker.setMap(null);
     inRequest = false;
     var objects = {};
-    var roadName = null;
     var roadId = null;
     for (var i = 0; i < result.results.length; i++) {
         if (result.results[i].layerId == 10) {
@@ -163,7 +272,7 @@ function onIdentity(result) {
                 break;
             case 1: //Видеокамеры
                 if (objects.video == null && roadId == result.results[i].attributes.Kroad)
-                    objects.video = { id: result.results[i].attributes.KSource, road: result.results[i].value };
+                    objects.video = { id: result.results[i].attributes.Kcamera, road: result.results[i].attributes.camera_name };
                 break;
             case 2: //Сенсоры скорости
                 if (objects.speed == null && roadId == result.results[i].attributes.Kroad)
@@ -174,60 +283,55 @@ function onIdentity(result) {
                     objects.services = [];
                 if (roadId == result.results[i].attributes.Kroad)
                     objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
-                        km: result.results[i].attributes.azs_pos, name: result.results[i].attributes.azs_name, dir: result.results[i].attributes.axis_name });
+                        km: parseFloat(result.results[i].attributes.azs_pos.replace(',', '.')), name: result.results[i].attributes.azs_name, dir: result.results[i].attributes.axis_name });
                 break;
             case 4: //Автобусные остановки
                 if (objects.services == null && roadId == result.results[i].attributes.Kroad)
                     objects.services = [];
                 if (roadId == result.results[i].attributes.Kroad)
                     objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
-                        km: result.results[i].attributes.bus_pos, name: result.results[i].attributes.bus_name, dir: result.results[i].attributes.axis_name });
+                        km: parseFloat(result.results[i].attributes.bus_pos.replace(',', '.')), name: result.results[i].attributes.bus_name, dir: result.results[i].attributes.axis_name });
                 break;
             case 5: //Общественное питание
                 if (objects.services == null && roadId == result.results[i].attributes.Kroad)
                     objects.services = [];
                 if (roadId == result.results[i].attributes.Kroad)
                     objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
-                        km: result.results[i].attributes.food_pos, name: result.results[i].attributes.food_name, dir: result.results[i].attributes.axis_name });
+                        km: parseFloat(result.results[i].attributes.food_pos.replace(',', '.')), name: result.results[i].attributes.food_name, dir: result.results[i].attributes.axis_name });
                 break;
             case 6: //Площадки отдыха 
                 if (objects.services == null && roadId == result.results[i].attributes.Kroad)
                     objects.services = [];
                 if (roadId == result.results[i].attributes.Kroad)
                     objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
-                        km: result.results[i].attributes.otdyh_pos, name: 'Площадка отдыха', dir: result.results[i].attributes.axis_name });
+                        km: parseFloat(result.results[i].attributes.otdyh_pos.replace(',', '.')), name: 'Места отдыха', dir: result.results[i].attributes.axis_name });
                 break;
             case 7: //Магазины
                 if (objects.services == null && roadId == result.results[i].attributes.Kroad)
                     objects.services = [];
                 if (roadId == result.results[i].attributes.Kroad)
                     objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
-                        km: result.results[i].attributes.shop_pos, name: result.results[i].attributes.shop_name, dir: result.results[i].attributes.axis_name });
+                        km: parseFloat(result.results[i].attributes.shop_pos.replace(',', '.')), name: result.results[i].attributes.shop_name, dir: result.results[i].attributes.axis_name });
                 break;
             case 8: //СТО
                 if (objects.services == null && roadId == result.results[i].attributes.Kroad)
                     objects.services = [];
                 if (roadId == result.results[i].attributes.Kroad)
                     objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
-                        km: result.results[i].attributes.sto_pos, name: result.results[i].attributes.sto_name, dir: result.results[i].attributes.axis_name });
+                        km: parseFloat(result.results[i].attributes.sto_pos.replace(',', '.')), name: result.results[i].attributes.sto_name, dir: result.results[i].attributes.axis_name });
                 break;
             case 9: //Автомойки
                 if (objects.services == null && roadId == result.results[i].attributes.Kroad)
                     objects.services = [];
                 if (roadId == result.results[i].attributes.Kroad)
                     objects.services.push({ layer: result.results[i].layerId, layerName: result.results[i].layerName, 
-                        km: result.results[i].attributes.wash_pos, name: result.results[i].attributes.wash_name, dir: result.results[i].attributes.axis_name });
+                        km: parseFloat(result.results[i].attributes.wash_pos.replace(',', '.')), name: result.results[i].attributes.wash_name, dir: result.results[i].attributes.axis_name });
                 break;
             case 10: // Дороги 
                 objects.common = objects.common != null ? objects.common : {};
-                if (objects.common.road == null && roadId == result.results[i].attributes.Kroad) {
-                    roadName = result.results[i].attributes.Shifr;
+                if (objects.common.roadId == null && roadId == result.results[i].attributes.Kroad) {
                     objects.common.roadId = result.results[i].attributes.Kroad;
-                    objects.common.road = result.results[i].attributes.Titul_full;
                     objects.common.roadShifr = result.results[i].attributes.Shifr;
-                    objects.common.roadLength = result.results[i].attributes.km;
-                    objects.common.service = result.results[i].attributes.FGU;
-                    objects.common.servicePhone = result.results[i].attributes.phone;
                 }
                 break;
             case 11: // Км отметки
@@ -252,9 +356,8 @@ function onIdentity(result) {
                 break;
         }
     }
-    if (objects.meteo != null || objects.video != null
-        || objects.speed != null || objects.common != null) {
-        showInfoWindow(objects, roadName);
+    if (objects.common != null && objects.common.roadId != null) {
+        showInfoWindow(objects);
     } else {
         getNoInfo().show();
     }
@@ -273,12 +376,12 @@ function getDialogOptions() {
     return panelOptions;
 }
 
-function showInfoWindow(objects, roadName) {
+function showInfoWindow(objects) {
     var buttons = [];
     if (objects.common != null)
         buttons.push({ icon: 'Images/Tabs/common.png', iconCls: 'tabIcon', pressed: true, handler: Ext.util.Functions.createDelegate(onCommonClick, objects.common) });
     if (objects.meteo != null)
-        buttons.push({ icon: 'Images/Tabs/meteo.png', iconCls: 'tabIcon', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onMeteoClick, objects.meteo) });
+        buttons.push({ icon: 'Images/Tabs/meteo.png', iconCls: 'tabIcon', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onMeteoClick, { common: objects.common, meteo: objects.meteo }) });
     if (objects.video != null) 
         buttons.push({ icon: 'Images/Tabs/video.png', iconCls: 'tabIcon', pressed: buttons.length == 0, handler: Ext.util.Functions.createDelegate(onVideoClick, objects.video) });
     if (objects.speed != null)
@@ -303,7 +406,7 @@ function showInfoWindow(objects, roadName) {
                     {
                         dock: 'top',
                         xtype: 'toolbar',
-                        title: roadName,
+                        title: objects.common.roadShifr + ', ' + objects.common.km1 + '-й км',
                         height: 40,
                         items: [
                             { xtype: 'spacer' },
@@ -329,8 +432,8 @@ function onMeteoClick() {
     Ext.util.JSONP.request({
         url: 'Data.ashx',
         callbackKey: 'callback',
-        params: { source: 'meteodata', id: this.id },
-        callback: Ext.util.Functions.createDelegate(onGetMeteoData, { maker: this })
+        params: { source: 'meteodata', id: this.meteo.id },
+        callback: Ext.util.Functions.createDelegate(onGetMeteoData, this)
     });
 }
 
@@ -351,10 +454,14 @@ function onGetMeteoData(result) {
     Ext.getDom('meteo_img').src = 'Images/Meteo/' + result.ImageName;
     Ext.getDom('meteo_tmp').style.color = tColor;
     Ext.getDom('meteo_tmp').innerHTML = result.TempName;
-    Ext.getDom('meteo_road_state').innerHTML = result.Surface;
-    Ext.getDom('meteo_wind_img').src = 'Images/Meteo/' + windName + '.png';
-    Ext.getDom('meteo_wind_direct').innerHTML = result.WindDirection;
+    Ext.getDom('meteo_time').innerHTML = result.Time;
+    Ext.getDom('meteo_road_state1').innerHTML = getDefault(result.Surface1);
+    Ext.getDom('meteo_road_state2').innerHTML = getDefault(result.Surface2);
+    Ext.getDom('meteo_road_dir1').innerHTML = getDefault(this.common.dir1);
+    Ext.getDom('meteo_road_dir2').innerHTML = getDefault(this.common.dir2);
+    Ext.getDom('meteo_wind_dir').innerHTML = result.WindDirection;
     Ext.getDom('meteo_wind_speed').innerHTML = result.WindSpeed;
+    Ext.getDom('meteo_wind_speed_max').innerHTML = result.WindSpeedMax;
     dialogPanel.removeAll();
     dialogPanel.add(new Ext.Panel({ html: Ext.getDom('meteo').innerHTML }));
     dialogPanel.doLayout();
@@ -393,15 +500,19 @@ function onGetVideoData(result) {
 }
 
 function onSwipe(targetId, direction) {
-    switch(direction) {
-        case 'left':
-            currVideoIndex++;
-            showVideoImage(direction);
-            break;
-        case 'right':
-            currVideoIndex--;
-            showVideoImage(direction);
-            break;
+    if (targetId == 'video') {
+        switch(direction) {
+            case 'left':
+                currVideoIndex++;
+                showVideoImage(direction);
+                break;
+            case 'right':
+                currVideoIndex--;
+                showVideoImage(direction);
+                break;
+        }
+    } else if (targetId == 'services') {
+        onServiceNext(direction);
     }
 }
 
@@ -553,15 +664,36 @@ function prevSpeedDay() {
 
 function onCommonClick() {
     lastVideoPanel = null;
-    Ext.getDom('common_road').innerHTML = this.road;
     Ext.getDom('common_km1').innerHTML = this.km1 == null ? ('') : (this.km1 + '-й км');
-    Ext.getDom('common_dir1').innerHTML = this.dir1 == null ? ('') : (this.dir1);
-    Ext.getDom('common_km2').innerHTML = this.km2 == null ? ('') : (this.km2 + '-й км');
-    Ext.getDom('common_dir2').innerHTML = this.dir2 == null ? ('') : (this.dir2);
-    Ext.getDom('common_roadLenght').innerHTML = this.roadLength + ' км';
-    Ext.getDom('common_service').innerHTML = this.service;
-    Ext.getDom('common_servicePhone').innerHTML = this.servicePhone;
-    Ext.getDom('common_dtp').innerHTML = this.dtpName != null ? this.dtpName : "Н/Д";
+    Ext.util.JSONP.request({
+        url: 'Data.ashx',
+        callbackKey: 'callback',
+        params: { source: 'common', id: this.roadId, km: this.km1 },
+        callback: Ext.util.Functions.createDelegate(onGetCommonData, { maker: this })
+    });
+}
+
+function getDefault(str, defStr) {
+    return (str == null || str == '') ? (defStr == null ? 'Н/Д' : defStr) : str;
+}
+
+function split(str, separator) {
+    var arr = str.split(separator);
+    result = arr[0];
+    for(var i = 1; i < arr.length; i++) 
+        result += ('<br />' + arr[i]);
+    return result;
+}
+
+function onGetCommonData(result) {
+    Ext.getDom('common_road').innerHTML = getDefault(result.RoadName);
+    Ext.getDom('common_service').innerHTML = getDefault(result.ServiceName);
+    Ext.getDom('common_service_phone').innerHTML = split(getDefault(result.ServicePhone), ',');
+    Ext.getDom('common_service_km').innerHTML = getDefault(result.ServiceKm);
+    Ext.getDom('common_gibdd').innerHTML = getDefault(result.GIBDDName);
+    Ext.getDom('common_gibdd_address').innerHTML = getDefault(result.GIBDDAddress);
+    Ext.getDom('common_gibdd_phone').innerHTML = split(getDefault(result.GIBDDPhone), ',');
+
     dialogPanel.removeAll();
     dialogPanel.add(new Ext.Panel({ html: Ext.getDom('common').innerHTML }));
     dialogPanel.doLayout();
@@ -578,9 +710,20 @@ function onServicesClick() {
     rightName = servicesInfo.common.dir2;
     currentService = -1;
     servicesDisplay = [];
+    addLayerToDisplay(3);
+    addLayerToDisplay(9);
+    addLayerToDisplay(8);
+    addLayerToDisplay(5);
+    addLayerToDisplay(4);
+    addLayerToDisplay(6);
+    addLayerToDisplay(7);
+    onServiceNext('left');
+}
+
+function addLayerToDisplay(layerId) {
     var lastLayerId = null;
     for(var i = 0; i < servicesInfo.services.length; i++) {
-        if (lastLayerId != servicesInfo.services[i].layer) {
+        if (lastLayerId != servicesInfo.services[i].layer && servicesInfo.services[i].layer == layerId) {
             var displayObj = { };
             switch(servicesInfo.services[i].layer) {
                 case 3: displayObj.img = 'Images/Markers/poi_azs.png'; break;
@@ -596,23 +739,39 @@ function onServicesClick() {
             displayObj.right = [];
 
             if (servicesInfo.services[i].dir == 'слева')
-                displayObj.left.push(servicesInfo.services[i]);
+                addPOIToDir(displayObj.left, servicesInfo.services[i], servicesInfo.common.km1);
             else    
-                displayObj.right.push(servicesInfo.services[i]);
+                addPOIToDir(displayObj.right, servicesInfo.services[i], servicesInfo.common.km2);
             servicesDisplay.push(displayObj);
             lastLayerId = servicesInfo.services[i].layer;
-        } else {
+        } else  if (servicesInfo.services[i].layer == layerId) {
             if (servicesInfo.services[i].dir == 'слева')
-                displayObj.left.push(servicesInfo.services[i]);
+                addPOIToDir(displayObj.left, servicesInfo.services[i], servicesInfo.common.km1);
             else    
-                displayObj.right.push(servicesInfo.services[i]);
+                addPOIToDir(displayObj.right, servicesInfo.services[i], servicesInfo.common.km2);
         }
     }
-    onServiceNext('right');
+}
+
+function addPOIToDir(dir, poi, km) {
+    if (dir.length < 3)
+        dir.push(poi);
+    else {
+        var maxIndex = 0;
+        var max = 0;
+        for (var i = 0; i < dir.length; i++) {
+            if (Math.abs(dir[i].km - km) > max) {
+                max = Math.abs(dir[i].km - km);
+                maxIndex = i;
+            }
+        }
+        if (max > Math.abs(poi.km - km)) 
+            dir[maxIndex] = poi;
+    }
 }
 
 function onServiceNext(dir) {
-    if (dir == 'left')
+    if (dir == 'right')
         currentService = currentService > 0 ? (currentService - 1) : 0;
     else
         currentService = currentService < (servicesDisplay.length - 1) ? (currentService + 1) : (servicesDisplay.length - 1);
@@ -643,7 +802,7 @@ function buildServicesList(list, name) {
     if (list.length > 0) {
         str += '<span class="arial11 bold">' + name + '</span><br />';
         for (var i = 0; i < list.length; i++) {
-            str += '<span class="arial10 bold">' + list[i].km + ' км:</span>';
+            str += '<span class="arial10 bold">' + list[i].km.toFixed(1) + ' км:</span>';
             str += '  <span class="arial10">' + list[i].name + '</span><br />';
         }
     }
@@ -868,7 +1027,6 @@ function getMapSettings(){
         model  : 'mapSettings',
         data: [
             { name: 'Карта', image: 'map.png' },
-            { name: 'Дорога', image: 'road.png' },
             { name: 'Спутник', image: 'stallite.png' },
             { name: 'Гибрид', image: 'hybrid.png' }
         ]
@@ -895,12 +1053,9 @@ function getMapSettings(){
                         map.map.setMapTypeId("ArcGIS");
                         break;
                     case 1:
-                        map.map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
-                        break;
-                    case 2:
                         map.map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
                         break;
-                    case 3:
+                    case 2:
                         map.map.setMapTypeId(google.maps.MapTypeId.HYBRID);
                         break;
                 }
@@ -918,7 +1073,7 @@ function getMapSettings(){
         floating: true,
         modal: true,
         width: 220,
-        height: 270,
+        height: 220,
         dockedItems: [
                     {
                         dock: 'top',
@@ -967,16 +1122,14 @@ function getObjectsSettings(){
             { name: 'Видеокамеры', id: 'video', img: 'video', state: false, zindex: 1 },
             { name: 'Метеостанции', id: 'meteo', img: 'meteo', state: false, zindex: 1 },
             { name: 'Скорость', id: 'sensors', img: 'sensors', state: false, zindex: 1 },
+            { name: 'Ремонт', id: 'remont', img: 'remont', state: false, zindex: 0 },
             { name: 'АЗС', id: 'poi_azs', img: 'poi_azs', state: false, zindex: 1 },
             { name: 'Автомойки', id: 'poi_wash', img: 'poi_wash', state: false, zindex: 1 },
             { name: 'СТО', id: 'poi_sto', img: 'poi_sto', state: false, zindex: 1 },
             { name: 'Пункты питания', id: 'poi_food', img: 'poi_food', state: false, zindex: 1 },
             { name: 'Остановки', id: 'poi_bus', img: 'poi_bus', state: false, zindex: 1 },
             { name: 'Места отдыха', id: 'poi_otdyh', img: 'poi_otdyh', state: false, zindex: 1 },
-            { name: 'Магазины', id: 'poi_shop', img: 'poi_shop', state: false, zindex: 1 },
-            { name: 'Аварийность', id: 'dtp', img: 'dtp', state: false, zindex: 0 },
-            { name: 'Ремонт', id: 'remont', img: 'remont', state: false, zindex: 0 },
-            { name: 'Ремонт план', id: 'remont_plan', img: 'remont_plan', state: false, zindex: 0 }
+            { name: 'Магазины', id: 'poi_shop', img: 'poi_shop', state: false, zindex: 1 }
         ]
     });
 
@@ -995,40 +1148,16 @@ function getObjectsSettings(){
                     Ext.get(element).addCls('selectedItem');
                 else
                     Ext.get(element).removeCls('selectedItem');
-                var wasDifferentZIndex = false;
-                var lastZIndex = null;
-                for(var i = 0; i < cmp.getStore().getCount(); i++) {
-                    if (lastZIndex != null && cmp.getStore().getAt(i).data.state && lastZIndex != cmp.getStore().getAt(i).data.zindex) {
-                        wasDifferentZIndex = true;
-                        break;
-                    }
-                    if (cmp.getStore().getAt(i).data.state) 
-                        lastZIndex = cmp.getStore().getAt(i).data.zindex;
-                }
-                //if (!wasDifferentZIndex) {
+
+                if (cmp.getStore().getAt(index).data.id != 'remont')
+                    showHideMarkers(cmp.getStore().getAt(index).data.id);
+                else
+                {
                     if (cmp.getStore().getAt(index).data.state)
                         showLayer(cmp.getStore().getAt(index).data.id);
                     else
                         hideLayer(cmp.getStore().getAt(index).data.id);
-//                }
-//                else
-//                {
-//                    for(var i = 0; i < cmp.getStore().getCount(); i++) {
-//                        if (cmp.getStore().getAt(i).data.state && layers[cmp.getStore().getAt(i).data.id].getMap() != null) 
-//                            hideLayer(cmp.getStore().getAt(i).data.id);
-//                    }
-//                    window.setTimeout(function() {
-//                    for(var i = 0; i < objectsStore.getCount(); i++) {
-//                        if (objectsStore.getAt(i).data.state && objectsStore.getAt(i).data.zindex == 0) 
-//                            showLayer(objectsStore.getAt(i).data.id);
-//                    }
-//                    for(var i = 0; i < objectsStore.getCount(); i++) {
-//                        if (objectsStore.getAt(i).data.state && objectsStore.getAt(i).data.zindex == 1) 
-//                            showLayer(objectsStore.getAt(i).data.id);
-//                    }
-//                    }, 0);
-
-//                }
+                }
             }
         }
     });
@@ -1073,8 +1202,6 @@ function getObjectsSettings(){
 function showLayer(id) {
     if (id == 'remont') 
         layers[id] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont&t=' + (new Date()).getTime(), { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-    if (id == 'remont_plan') 
-        layers[id] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont_plan&t=' + (new Date()).getTime(), { suppressInfoWindows: true, preserveViewport: true, clickable: false });
     layers[id].setMap(map.map);
 }
 
