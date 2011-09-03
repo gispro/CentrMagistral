@@ -66,7 +66,7 @@
             </table>
         </div>
         <div id="common">
-            <table class="stTable">
+            <table class="padding3">
                 <tr style="height:60px">
                     <td style="width:10%;text-align:center;vertical-align:middle">
                         <span id="common_road" class="arial12 bold"></span>
@@ -98,7 +98,7 @@
                                 <td class="arial10" style="width:20%">
                                     ГИБДД:
                                 </td>
-                                <td class="arial11 bold" style="vertical-align:middle" id="common_gibdd">
+                                <td class="arial10 bold" style="vertical-align:middle" id="common_gibdd">
                                 </td>
                             </tr>
                             <tr>

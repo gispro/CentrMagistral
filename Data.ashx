@@ -12,7 +12,7 @@ public class Data : IHttpHandler {
         var id = context.Request.QueryString["id"];
         context.Response.Clear();
         context.Response.ContentType = "application/json";
-        context.Response.Cache.SetNoStore();
+        context.Response.Cache.SetMaxAge(new TimeSpan(0, 10, 0));
         var builder = new System.Text.StringBuilder();
         if (HttpContext.Current.Request.QueryString["callback"] != null)
             builder.AppendFormat("{0}(", HttpContext.Current.Request.QueryString["callback"]);

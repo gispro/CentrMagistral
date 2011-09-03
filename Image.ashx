@@ -8,6 +8,7 @@ public class Image : IHttpHandler {
     public void ProcessRequest (HttpContext context) 
     {
         context.Response.ContentType = "image/jpeg";
+        context.Response.Cache.SetMaxAge(new TimeSpan(7, 0, 0, 0));
         var id = context.Request.QueryString["id"];
         var camera = context.Request.QueryString["camera"];
 

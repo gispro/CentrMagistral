@@ -1,4 +1,14 @@
-﻿.bold
+﻿.padding3
+{
+    padding: 3px;
+}
+
+.padding3 td
+{
+    padding: 3px;
+}
+
+.bold
 {
     font-weight:bold;
 }

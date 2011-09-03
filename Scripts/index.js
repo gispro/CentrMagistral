@@ -1,4 +1,6 @@
-﻿var map = null;
+﻿var mapUrl = "http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/mosobl_osn/MapServer";
+var mapLayer = null;
+var map = null;
 var dpi = 96;
 var emptyUrl = 'Images/empty.png';
 var geoLocationProovider = null;
@@ -62,6 +64,7 @@ Ext.setup({
                                 if (locationMarker != null)
                                     locationMarker.setMap(null);
                                 locationMarker = new google.maps.Marker({
+                                    zIndex: 1000,
                                     icon: 'Images/location.png',
                                     position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
                                     map: map.map,
@@ -88,18 +91,8 @@ Ext.setup({
             items: [map]
         });
 
-//        layers['video'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=video&icon=video&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-//        layers['meteo'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=meteo&icon=meteo&t=111', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-//        layers['poi_sto'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_sto&icon=poi_sto&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-//        layers['poi_azs'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_azs&icon=poi_azs&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });        
-//        layers['poi_bus'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_bus&icon=poi_bus&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-//        layers['poi_food'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_food&icon=poi_food&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-//        layers['poi_otdyh'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_otdyh&icon=poi_otdyh&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-//        layers['poi_shop'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_shop&icon=poi_shop&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-//        layers['poi_wash'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=poi_wash&icon=poi_wash&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-//        layers['sensors'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=sensors&icon=sensors&t=11', { suppressInfoWindows: true, preserveViewport: true, clickable: false });
-
         layers['remont'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont&t=' + (new Date()).getTime(), { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+        layers['poi_bus_a'] = new gmaps.ags.MapOverlay('http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events_merc/MapServer');
 
         google.maps.event.addListener(map.map, 'mousedown', function (event) {
             startMouseDown = new Date();
@@ -112,6 +105,7 @@ Ext.setup({
                 return;
             videoData = null;
             identityMarker = new google.maps.Marker({
+                zIndex: 1000,
                 icon: 'Images/tapping.png',
                 position: event.latLng,
                 map: map.map,
@@ -139,8 +133,12 @@ Ext.setup({
             });
         });
 
-        map.map.mapTypes.set("ArcGIS", new gmaps.ags.MapType("http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/mosobl_osn/MapServer", {name: 'ArcGIS'}) );
-        window.setTimeout(function() { map.map.setMapTypeId("ArcGIS"); }, 1000);
+        map.map.mapTypes.set("ArcGIS", new gmaps.ags.MapType(mapUrl, {name: 'ArcGIS'}) );
+        window.setTimeout(function() { 
+//            mapLayer = new gmaps.ags.MapOverlay(mapUrl);
+//            mapLayer.setMap(map.map); 
+            map.map.setMapTypeId("ArcGIS"); 
+        }, 1000);
     }
 });
 
@@ -162,23 +160,29 @@ function getPOIIndex(poiName) {
 
 function showHideMarkers(poiName) {
     if (markers[poiName] == null) {
+//        Ext.util.JSONP.request({
+//            url: 'http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events/MapServer/' + getPOIIndex(poiName) + '/query',
+//            callbackKey: 'callback',
+//            params: { 
+//                text: '',
+//                geometry: '',
+//                geometryType: 'esriGeometryEnvelope',
+//                inSR: '',
+//                spatialRel: 'esriSpatialRelIntersects',
+//                where: '1=1',
+//                returnGeometry: true,
+//                outSR: '',
+//                f: 'pjson'
+//            },
+//            callback: Ext.util.Functions.createDelegate(onGetMarkers, { poiName: poiName })
+//        });
         Ext.util.JSONP.request({
-            url: 'http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events/MapServer/' + getPOIIndex(poiName) + '/query',
+            url: 'GeoData.ashx',
             callbackKey: 'callback',
-            params: { 
-                text: '',
-                geometry: '',
-                geometryType: 'esriGeometryEnvelope',
-                inSR: '',
-                spatialRel: 'esriSpatialRelIntersects',
-                where: '1=1',
-                returnGeometry: true,
-                outSR: '',
-                f: 'pjson'
-            },
+            params: { source: poiName },
             callback: Ext.util.Functions.createDelegate(onGetMarkers, { poiName: poiName })
         });
-    } else {
+    } else if (markers[poiName] != null) {
         if (markers[poiName].state) {
             for (var i = 0; i < markers[poiName].visible.length; i++) 
                     markers[poiName].visible[i].setVisible(false);
@@ -202,7 +206,7 @@ function getMarkersDiff() {
 }
 
 function showMarkers(poiName) {
-    var diff = getMarkersDiff();
+    var diff = 0;//getMarkersDiff();
     markers[poiName].visible.length = 0;
     for (var i = 0; i < markers[poiName].markers.length; i++) {
         var show = true;
@@ -218,6 +222,7 @@ function showMarkers(poiName) {
 }
 
 function relocateMarkers() {
+    return;
     var diff = getMarkersDiff();
     if (lastDiff == diff)
         return;
@@ -232,6 +237,10 @@ function relocateMarkers() {
 }
 
 function onGetMarkers(result) {
+    if (result.error != null) {
+        alert('Ошибка при получении данных о слое!');
+        return;
+    }
     markers[this.poiName] = { state: false, markers: [], visible: [] };
     for (var i = 0; i < result.features.length; i++) {
         var coord = new google.maps.LatLng(result.features[i].geometry.y, result.features[i].geometry.x);
@@ -256,6 +265,7 @@ function onIdentity(result) {
     inRequest = false;
     var objects = {};
     var roadId = null;
+    var km = null;
     for (var i = 0; i < result.results.length; i++) {
         if (result.results[i].layerId == 10) {
             roadId = result.results[i].attributes.Kroad;
@@ -263,20 +273,42 @@ function onIdentity(result) {
         }
     }
     for (var i = 0; i < result.results.length; i++) {
+        if (result.results[i].layerId == 11 && roadId == result.results[i].attributes.Kroad) {
+            km = parseFloat(result.results[i].attributes.km.replace(',', '.'));
+            break;
+        }
+    }
+    
+    for (var i = 0; i < result.results.length; i++) {
         if (roadId == null)
             roadId = result.results[i].attributes.Kroad;
         switch(result.results[i].layerId){
             case 0: //Метеостанции
-                if (objects.meteo == null && roadId == result.results[i].attributes.Kroad) 
-                    objects.meteo = { id: result.results[i].attributes.KStation };
+                if (roadId == result.results[i].attributes.Kroad) {
+                    var mkm = parseFloat(result.results[i].attributes.station_pos.replace(',', '.'));
+                    if (objects.meteo == null) 
+                        objects.meteo = { id: result.results[i].attributes.KStation, km: mkm };
+                    else if (Math.abs(objects.meteo.km - km) > Math.abs(mkm - km))
+                        objects.meteo = { id: result.results[i].attributes.KStation, km: mkm };
+                }
                 break;
             case 1: //Видеокамеры
-                if (objects.video == null && roadId == result.results[i].attributes.Kroad)
-                    objects.video = { id: result.results[i].attributes.Kcamera, road: result.results[i].attributes.camera_name };
+                if (roadId == result.results[i].attributes.Kroad) {
+                    var vkm = parseFloat(result.results[i].attributes.camera_pos.replace(',', '.'));
+                    if (objects.video == null)
+                        objects.video = { id: result.results[i].attributes.Kcamera, road: result.results[i].attributes.camera_name, km: vkm };
+                    else if (Math.abs(objects.video.km - km) > Math.abs(vkm - km))
+                        objects.video = { id: result.results[i].attributes.Kcamera, road: result.results[i].attributes.camera_name, km: vkm };
+                }
                 break;
             case 2: //Сенсоры скорости
-                if (objects.speed == null && roadId == result.results[i].attributes.Kroad)
-                    objects.speed = { id: result.results[i].attributes.Ksensor };
+                if (roadId == result.results[i].attributes.Kroad) {
+                    var skm = parseFloat(result.results[i].attributes.sensor_pos.replace(',', '.'));
+                    if (objects.speed == null)
+                        objects.speed = { id: result.results[i].attributes.Ksensor, km: skm };
+                    else if (Math.abs(objects.speed.km - km) > Math.abs(skm - km))
+                        objects.speed = { id: result.results[i].attributes.Ksensor, km: skm };
+                }
                 break;
             case 3: //АЗС
                 if (objects.services == null && roadId == result.results[i].attributes.Kroad)
@@ -356,7 +388,7 @@ function onIdentity(result) {
                 break;
         }
     }
-    if (objects.common != null && objects.common.roadId != null) {
+    if (objects.common != null && objects.common.roadId != null && km != null) {
         showInfoWindow(objects);
     } else {
         getNoInfo().show();
@@ -1050,12 +1082,15 @@ function getMapSettings(){
                 Ext.get(element).addCls('selectedItem');
                 switch(index){
                     case 0:
+                        mapLayer.setMap(map.map);
                         map.map.setMapTypeId("ArcGIS");
                         break;
                     case 1:
+                        mapLayer.setMap(null);
                         map.map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
                         break;
                     case 2:
+                        mapLayer.setMap(null);
                         map.map.setMapTypeId(google.maps.MapTypeId.HYBRID);
                         break;
                 }
@@ -1128,6 +1163,7 @@ function getObjectsSettings(){
             { name: 'СТО', id: 'poi_sto', img: 'poi_sto', state: false, zindex: 1 },
             { name: 'Пункты питания', id: 'poi_food', img: 'poi_food', state: false, zindex: 1 },
             { name: 'Остановки', id: 'poi_bus', img: 'poi_bus', state: false, zindex: 1 },
+            { name: 'Остановки (Arc)', id: 'poi_bus_a', img: 'poi_bus', state: false, zindex: 1 },
             { name: 'Места отдыха', id: 'poi_otdyh', img: 'poi_otdyh', state: false, zindex: 1 },
             { name: 'Магазины', id: 'poi_shop', img: 'poi_shop', state: false, zindex: 1 }
         ]
@@ -1149,14 +1185,17 @@ function getObjectsSettings(){
                 else
                     Ext.get(element).removeCls('selectedItem');
 
-                if (cmp.getStore().getAt(index).data.id != 'remont')
-                    showHideMarkers(cmp.getStore().getAt(index).data.id);
-                else
-                {
-                    if (cmp.getStore().getAt(index).data.state)
-                        showLayer(cmp.getStore().getAt(index).data.id);
-                    else
-                        hideLayer(cmp.getStore().getAt(index).data.id);
+                switch(cmp.getStore().getAt(index).data.id) {
+                    default:
+                        showHideMarkers(cmp.getStore().getAt(index).data.id);
+                        break;
+                    case 'remont':
+                    case 'poi_bus_a':
+                        if (cmp.getStore().getAt(index).data.state)
+                            showLayer(cmp.getStore().getAt(index).data.id);
+                        else
+                            hideLayer(cmp.getStore().getAt(index).data.id);
+                        break;
                 }
             }
         }
@@ -1237,6 +1276,7 @@ function onGetSearch(result) {
             searchMarker.setMap(null);
         var coord = new google.maps.LatLng(result.Placemark[0].Point.coordinates[1], result.Placemark[0].Point.coordinates[0]);
         searchMarker = new google.maps.Marker({
+            zIndex: 1000,
             position: coord,
             map: map.map,
         });
