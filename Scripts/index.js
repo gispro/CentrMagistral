@@ -97,8 +97,12 @@ Ext.setup({
         google.maps.event.addListener(map.map, 'mousedown', function (event) {
             startMouseDown = new Date();
         });
+        google.maps.event.addListener(map.map, 'dragstart', function (event) {
+            startMouseDown = new Date(1990, 1, 1);
+        });
         google.maps.event.addListener(map.map, 'zoom_changed', function (event) {
-            relocateMarkers();
+            //document.title = map.map.getZoom();
+            startMouseDown = new Date(1990, 1, 1);
         });
         google.maps.event.addListener(map.map, 'mouseup', function (event) {
             if (inRequest || (new Date()).getTime() - startMouseDown.getTime() > 500)
@@ -112,9 +116,11 @@ Ext.setup({
             });
             inRequest = true;
             showProgress();
-            var tolerance = 30;
-            if (map.map.getZoom() <= 8)
+            var tolerance = 5;
+            if (map.map.getZoom() <= 15)
                 tolerance = 10;
+            else if (map.map.getZoom() <= 8)
+                tolerance = 30;
             var display = screen.width + ',' + screen.height + ',' + dpi;
             Ext.util.JSONP.request({
                 url: 'http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events/MapServer/identify',
@@ -132,6 +138,17 @@ Ext.setup({
                 callback: onIdentity
             });
         });
+
+        Ext.util.JSONP.callback = function(json) {
+            try {
+                this.current.callback.call(this.current.scope, json);
+            } catch(e) {
+                //this.current.errorCallback.call(this.current.scope);
+            }
+
+            document.getElementsByTagName('head')[0].removeChild(this.current.script);
+            this.next();
+        };
 
         map.map.mapTypes.set("ArcGIS", new gmaps.ags.MapType(mapUrl, {name: 'ArcGIS'}) );
         window.setTimeout(function() { 
@@ -160,22 +177,6 @@ function getPOIIndex(poiName) {
 
 function showHideMarkers(poiName) {
     if (markers[poiName] == null) {
-//        Ext.util.JSONP.request({
-//            url: 'http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events/MapServer/' + getPOIIndex(poiName) + '/query',
-//            callbackKey: 'callback',
-//            params: { 
-//                text: '',
-//                geometry: '',
-//                geometryType: 'esriGeometryEnvelope',
-//                inSR: '',
-//                spatialRel: 'esriSpatialRelIntersects',
-//                where: '1=1',
-//                returnGeometry: true,
-//                outSR: '',
-//                f: 'pjson'
-//            },
-//            callback: Ext.util.Functions.createDelegate(onGetMarkers, { poiName: poiName })
-//        });
         Ext.util.JSONP.request({
             url: 'GeoData.ashx',
             callbackKey: 'callback',
@@ -222,7 +223,6 @@ function showMarkers(poiName) {
 }
 
 function relocateMarkers() {
-    return;
     var diff = getMarkersDiff();
     if (lastDiff == diff)
         return;
@@ -444,7 +444,10 @@ function showInfoWindow(objects) {
                             { xtype: 'spacer' },
                             { text: 'X', handler: function () {
                                 var dlg = this.ownerCt.ownerCt;
-                                dlg.hide(); dlg.destroy();
+                                if (Ext.util.JSONP.queue.length == 0 && Ext.util.JSONP.current == null) {
+                                    dlg.hide(); 
+                                    dlg.destroy();
+                                }
                             },
                             style: { fontSize: '14pt', fontWeight: 'bold' },
                             ui: 'round'
@@ -720,11 +723,11 @@ function split(str, separator) {
 function onGetCommonData(result) {
     Ext.getDom('common_road').innerHTML = getDefault(result.RoadName);
     Ext.getDom('common_service').innerHTML = getDefault(result.ServiceName);
-    Ext.getDom('common_service_phone').innerHTML = split(getDefault(result.ServicePhone), ',');
-    Ext.getDom('common_service_km').innerHTML = getDefault(result.ServiceKm);
+    Ext.getDom('common_service_phone').innerHTML = split(getDefault(result.ServicePhone, ''), ',');
+    Ext.getDom('common_service_km').innerHTML = getDefault(result.ServiceKm, '');
     Ext.getDom('common_gibdd').innerHTML = getDefault(result.GIBDDName);
-    Ext.getDom('common_gibdd_address').innerHTML = getDefault(result.GIBDDAddress);
-    Ext.getDom('common_gibdd_phone').innerHTML = split(getDefault(result.GIBDDPhone), ',');
+    Ext.getDom('common_gibdd_address').innerHTML = getDefault(result.GIBDDAddress, '');
+    Ext.getDom('common_gibdd_phone').innerHTML = split(getDefault(result.GIBDDPhone, ''), ',');
 
     dialogPanel.removeAll();
     dialogPanel.add(new Ext.Panel({ html: Ext.getDom('common').innerHTML }));
@@ -1162,8 +1165,8 @@ function getObjectsSettings(){
             { name: 'Автомойки', id: 'poi_wash', img: 'poi_wash', state: false, zindex: 1 },
             { name: 'СТО', id: 'poi_sto', img: 'poi_sto', state: false, zindex: 1 },
             { name: 'Пункты питания', id: 'poi_food', img: 'poi_food', state: false, zindex: 1 },
-            { name: 'Остановки', id: 'poi_bus', img: 'poi_bus', state: false, zindex: 1 },
-            { name: 'Остановки (Arc)', id: 'poi_bus_a', img: 'poi_bus', state: false, zindex: 1 },
+            //{ name: 'Остановки', id: 'poi_bus', img: 'poi_bus', state: false, zindex: 1 },
+            { name: 'Остановки', id: 'poi_bus_a', img: 'poi_bus', state: false, zindex: 1 },
             { name: 'Места отдыха', id: 'poi_otdyh', img: 'poi_otdyh', state: false, zindex: 1 },
             { name: 'Магазины', id: 'poi_shop', img: 'poi_shop', state: false, zindex: 1 }
         ]
