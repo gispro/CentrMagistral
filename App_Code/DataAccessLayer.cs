@@ -7,14 +7,8 @@ using BLToolkit.Data;
 
 namespace DataBase
 {
-    public class DataAccessLayer
+    public static class DataAccessLayer
     {
-        private static string[] Sources = new string[] { "gp_image_body", "gp_image" };
-
-        public DataAccessLayer()
-        {
-        }
-
         public static byte[] GetImageData(int id)
         {
             byte[] data = null;
@@ -140,9 +134,9 @@ namespace DataBase
         {
             using (DbManager db = new DbManager())
                 return db.SetCommand(@"SELECT TOP 1 r.road_titul as RoadName, r.Kroad, " +
-                    "o.org_name as ServiceName, o.org_phone as ServicePhone, o.road_pos_beg as ServiceKmBeg, o.road_pos_end as ServiceKmEnd, " +
+                    "o.org_name as ServiceName, o.org_phone as ServicePhone, r.road_pos_beg as ServiceKmBeg, r.road_pos_end as ServiceKmEnd, " +
                     "g.org_name as GIBDDName, g.org_phone as GIBDDPhone, g.org_address as GIBDDAddress " +
-                    "FROM GP_road r LEFT JOIN GP_org_road o ON (r.Kroad=o.Kroad AND o.road_pos_beg <= @km AND @km <= o.road_pos_end) " +
+                    "FROM Sys_road r LEFT JOIN Sys_org o ON r.Korg=o.Korg " +
                     "LEFT JOIN GP_gibdd_road g ON(r.Kroad=g.Kroad AND g.road_pos_beg <= @km AND @km <= g.road_pos_end)  WHERE r.Kroad=@Kroad",
                     db.Parameter("@Kroad", roadId), db.Parameter("@km", km)).ExecuteObject<Common>();
         }

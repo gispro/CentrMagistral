@@ -19,6 +19,8 @@ public class GeoData : IHttpHandler {
         var id = GetPOIIndex(source);
 
         string response = context.Cache[source] as string;
+        if (response != null && response.Contains("Unable to perform query. Please check your parameters."))
+            response = null;
         if (response == null)
         {
             var request = System.Net.WebRequest.Create("http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events/MapServer/" +
@@ -28,7 +30,16 @@ public class GeoData : IHttpHandler {
             response = reader.ReadToEnd();
             if (HttpContext.Current.Request.QueryString["callback"] != null)
                 response = string.Format("{0}(", HttpContext.Current.Request.QueryString["callback"]) + response + ")";
-            context.Cache.Add(source, response, null, DateTime.MaxValue, new TimeSpan(0, 0, time), System.Web.Caching.CacheItemPriority.Default, null);
+            if (!response.Contains("Unable to perform query. Please check your parameters."))
+                context.Cache.Add(source, response, null, DateTime.MaxValue, new TimeSpan(0, 0, time), System.Web.Caching.CacheItemPriority.Default, null);
+        }
+        if (response.Contains("Unable to perform query. Please check your parameters."))
+        {
+            context.Response.Cache.SetMaxAge(new TimeSpan(0, 0, 0));
+            context.Response.Cache.SetNoServerCaching();
+            context.Response.Cache.SetNoStore();
+            if (context.Cache[source] != null)
+                context.Cache.Remove(source);
         }
         context.Response.Write(response);
     }

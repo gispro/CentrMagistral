@@ -67,7 +67,7 @@ Ext.setup({
                                     zIndex: 1000,
                                     icon: 'Images/location.png',
                                     position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
-                                    map: map.map,
+                                    map: map.map
                                 });
                                 map.map.panTo(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
                                 map.map.setZoom(17);
@@ -91,7 +91,7 @@ Ext.setup({
             items: [map]
         });
 
-        layers['remont'] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont&t=' + (new Date()).getTime(), { suppressInfoWindows: true, preserveViewport: true, clickable: false });
+        layers['remont'] = new gmaps.ags.MapOverlay('http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events_remont/MapServer');
         layers['poi_bus_a'] = new gmaps.ags.MapOverlay('http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events_merc/MapServer');
 
         google.maps.event.addListener(map.map, 'mousedown', function (event) {
@@ -112,13 +112,13 @@ Ext.setup({
                 zIndex: 1000,
                 icon: 'Images/tapping.png',
                 position: event.latLng,
-                map: map.map,
+                map: map.map
             });
             inRequest = true;
             showProgress();
-            var tolerance = 5;
+            var tolerance = 10;
             if (map.map.getZoom() <= 15)
-                tolerance = 10;
+                tolerance = 20;
             else if (map.map.getZoom() <= 8)
                 tolerance = 30;
             var display = screen.width + ',' + screen.height + ',' + dpi;
@@ -155,7 +155,7 @@ Ext.setup({
 //            mapLayer = new gmaps.ags.MapOverlay(mapUrl);
 //            mapLayer.setMap(map.map); 
             map.map.setMapTypeId("ArcGIS"); 
-        }, 1000);
+        }, 3000);
     }
 });
 
@@ -252,7 +252,7 @@ function onGetMarkers(result) {
             clickable: false,
             optimized: true,
             visible: false,
-            map: map.map,
+            map: map.map
         });
         markers[this.poiName].markers[i] = marker;                        
     }
@@ -709,7 +709,7 @@ function onCommonClick() {
 }
 
 function getDefault(str, defStr) {
-    return (str == null || str == '') ? (defStr == null ? 'Н/Д' : defStr) : str;
+    return (str == null || str == '' || str == 'Null') ? (defStr == null ? 'Н/Д' : defStr) : str;
 }
 
 function split(str, separator) {
@@ -838,7 +838,7 @@ function buildServicesList(list, name) {
         str += '<span class="arial11 bold">' + name + '</span><br />';
         for (var i = 0; i < list.length; i++) {
             str += '<span class="arial10 bold">' + list[i].km.toFixed(1) + ' км:</span>';
-            str += '  <span class="arial10">' + list[i].name + '</span><br />';
+            str += '  <span class="arial10">' + getDefault(list[i].name) + '</span><br />';
         }
     }
     return str;
@@ -864,6 +864,7 @@ function onGetRepairData(result) {
             str += '<span class="arial10 bold">' + result[i].Descr + '</span><br/>';
         str += '<span class="arial10 bold">' + 
             + result[i].Start + ' - ' + result[i].End + ' км:</span>  <span class="arial10">' + result[i].StartDateStr + ' - ' + result[i].EndDateStr + '</span><br/>';
+        str += '<span class="arial10">Исполнитель: ' + getDefault(result[i].Executor) + '</span><br/>';
     }
     if (str == "")
         str = "нет ремонта";
@@ -1242,8 +1243,6 @@ function getObjectsSettings(){
 }
 
 function showLayer(id) {
-    if (id == 'remont') 
-        layers[id] = new google.maps.KmlLayer(url + '/kml.ashx?kml=remont&t=' + (new Date()).getTime(), { suppressInfoWindows: true, preserveViewport: true, clickable: false });
     layers[id].setMap(map.map);
 }
 
@@ -1281,7 +1280,7 @@ function onGetSearch(result) {
         searchMarker = new google.maps.Marker({
             zIndex: 1000,
             position: coord,
-            map: map.map,
+            map: map.map
         });
         map.map.panTo(coord);
         map.map.setZoom(10);      

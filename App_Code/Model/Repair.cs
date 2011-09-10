@@ -19,6 +19,8 @@ public class Repair
     public DateTime? EndDate { get; set; }
     [MapField("remont_prim")]
     public string Descr { get; set; }
+    [MapField("remont_exec_org")]
+    public string Executor { get; set; }
 
     [MapIgnore]
     public string StartDateStr { get { return StartDate != null ? StartDate.Value.ToShortDateString() : string.Empty; } }

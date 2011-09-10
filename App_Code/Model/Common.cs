@@ -20,7 +20,7 @@ public class Common
         get
         {
             if (ServiceKmBeg != null && ServiceKmEnd != null)
-                return string.Format("с {0} по {1} км", ServiceKmBeg, ServiceKmEnd);
+                return string.Format("с {0} по {1} км", Math.Round(ServiceKmBeg.Value, 1), Math.Round(ServiceKmEnd.Value, 1));
             return string.Empty;
         }
     }
