@@ -862,8 +862,9 @@ function onGetRepairData(result) {
     for (var i = 0; i < result.length; i++) {
         if (result[i].Descr != null && result[i].Descr != '')
             str += '<span class="arial10 bold">' + result[i].Descr + '</span><br/>';
+        var endStr = getDefault(result[i].End, '');
         str += '<span class="arial10 bold">' + 
-            + result[i].Start + ' - ' + result[i].End + ' км:</span>  <span class="arial10">' + result[i].StartDateStr + ' - ' + result[i].EndDateStr + '</span><br/>';
+            + result[i].Start + (endStr == '' ? '' : (' - ' + result[i].End)) + ' км:</span>  <span class="arial10">' + result[i].StartDateStr + ' - ' + result[i].EndDateStr + '</span><br/>';
         str += '<span class="arial10">Исполнитель: ' + getDefault(result[i].Executor) + '</span><br/>';
     }
     if (str == "")
