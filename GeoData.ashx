@@ -7,7 +7,7 @@ public class GeoData : IHttpHandler {
     
     public void ProcessRequest (HttpContext context) 
     {
-        var timeStr = System.Configuration.ConfigurationManager.AppSettings["makersCacheTime"];
+        var timeStr = System.Configuration.ConfigurationManager.AppSettings["markersCacheTime"];
         var time = 172800;
         if (!string.IsNullOrEmpty(timeStr))
             time = int.Parse(timeStr, System.Globalization.CultureInfo.InvariantCulture);

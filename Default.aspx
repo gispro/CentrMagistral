@@ -19,6 +19,10 @@
     <script type="text/javascript">
         var gkey = '<%=System.Configuration.ConfigurationManager.AppSettings["gkey"]%>';
         var url = '<%=System.Configuration.ConfigurationManager.AppSettings["url"]%>';
+        var mapUrl = '<%=System.Configuration.ConfigurationManager.AppSettings["mapUrl"]%>';
+        var identityUrl = '<%=System.Configuration.ConfigurationManager.AppSettings["identityUrl"]%>';
+        var remontLayerUrl = '<%=System.Configuration.ConfigurationManager.AppSettings["remontLayerUrl"]%>';
+        var busLayerUrl = '<%=System.Configuration.ConfigurationManager.AppSettings["busLayerUrl"]%>';
     </script>
     <div style="width:1in" id="dpi"></div>
     <div style="display:none">

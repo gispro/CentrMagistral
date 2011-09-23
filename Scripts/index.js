@@ -1,5 +1,4 @@
-﻿var mapUrl = "http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/mosobl_osn/MapServer";
-var mapLayer = null;
+﻿var mapLayer = null;
 var map = null;
 var dpi = 96;
 var emptyUrl = 'Images/empty.png';
@@ -91,8 +90,8 @@ Ext.setup({
             items: [map]
         });
 
-        layers['remont'] = new gmaps.ags.MapOverlay('http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events_remont/MapServer');
-        layers['poi_bus_a'] = new gmaps.ags.MapOverlay('http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events_merc/MapServer');
+        layers['remont'] = new gmaps.ags.MapOverlay(remontLayerUrl);
+        layers['poi_bus_a'] = new gmaps.ags.MapOverlay(busLayerUrl);
 
         google.maps.event.addListener(map.map, 'mousedown', function (event) {
             startMouseDown = new Date();
@@ -123,7 +122,7 @@ Ext.setup({
                 tolerance = 30;
             var display = screen.width + ',' + screen.height + ',' + dpi;
             Ext.util.JSONP.request({
-                url: 'http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events/MapServer/identify',
+                url: identityUrl,
                 callbackKey: 'callback',
                 params: {
                     geometryType: 'esriGeometryPoint',
