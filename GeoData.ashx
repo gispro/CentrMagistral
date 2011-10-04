@@ -23,8 +23,9 @@ public class GeoData : IHttpHandler {
             response = null;
         if (response == null)
         {
-            var request = System.Net.WebRequest.Create("http://maps.gispro.ru/ArcGIS/rest/services/Rosavtodor/points_dd_events/MapServer/" +
-                id + "/query?text=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&where=1%3D1&returnGeometry=true&outSR=&outFields=&f=pjson");
+            var baseUrl = System.Configuration.ConfigurationManager.AppSettings["poiUrl"];
+            var request = System.Net.WebRequest.Create(baseUrl +
+                "/" + id + "/query?text=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&where=1%3D1&returnGeometry=true&outSR=&outFields=&f=pjson");
             request.Method = "GET";
             var reader = new System.IO.StreamReader(request.GetResponse().GetResponseStream());
             response = reader.ReadToEnd();
