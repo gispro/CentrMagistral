@@ -281,7 +281,7 @@
                 </p>
                 <br />
                 <p>
-                Разработка ЗАО «ГИСпроект» (www.gispro.ru). 2011 г.
+                Разработка ЗАО «ГИСпроект» (<a href="http://www.gispro.ru" target="_blank">www.gispro.ru</a>). 2011 г.
                 </p>
             </div>
         </div>
